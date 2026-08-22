@@ -1,17 +1,212 @@
-{% extends 'layout.html' %} {% block content %}
+{% extends 'layout.html' %}
+{% block content %}
 
-<div>
-  <div>Customers:</div>
-
-  {% for customer in customers %}
-  <div>
-    Name :
-    <span style="font-weight: bold"
-      >{{customer.first_name}} {{customer.last_name}}</span
-    >
-  </div>
-  <div>Mobile : <span style="font-weight: bold">{{customer.mobile}}</span></div>
-  <div>Email : <span style="font-weight: bold">{{customer.email}}</span></div>
-  {% endfor %}
+<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:22px">
+    <div>
+        <div class="page-title">العملاء</div>
+        <div class="page-sub">تواصل مع عملائك مباشرة — واتساب أو اتصال بضغطة واحدة</div>
+    </div>
+    <div style="display:flex; gap:9px; align-items:center; flex-wrap:wrap">
+        <label class="search-box">
+            <svg class="ic" style="width:16px;height:16px"><use href="#i-cart"/></svg>
+            <input type="text" id="cusSearch" placeholder="ابحث باسم العميل أو الجوال…">
+        </label>
+        <button class="btn btn-primary" onclick="openAdd()" style="flex-shrink:0">
+            <svg class="ic" style="width:16px;height:16px"><use href="#i-user"/></svg> إضافة عميل
+        </button>
+    </div>
 </div>
+
+<div id="emptyState" class="card" style="{% if customers.length > 0 or manual.length > 0 %}display:none;{% endif %} text-align:center; padding:56px 24px">
+    <div style="width:92px; height:92px; margin:0 auto 20px; border-radius:28px; background:linear-gradient(135deg,#f1f5f9,#e2e8f0); display:grid; place-items:center">
+        <svg class="ic" style="width:44px;height:44px;color:#94a3b8"><use href="#i-users"/></svg>
+    </div>
+    <h3 style="font-size:18px; font-weight:800; margin-bottom:8px">لا يوجد عملاء بعد</h3>
+    <p style="color:var(--muted); font-size:13.5px; line-height:2">أضف عميلاً يدوياً، وسيظهر عملاؤك من سلة تلقائياً مع أول عملية شراء.</p>
+</div>
+
+{% if manual.length > 0 %}
+<div class="page-sub" style="margin:0 0 12px">عملاء مضافون يدوياً ({{ manual.length }})</div>
+{% endif %}
+<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:16px" id="manualGrid">
+    {% for customer in manual %}
+    {% set fullDigits = customer.mobile %}
+    <div class="card card-hover cus-card" data-search="{{ (customer.name ~ " " ~ customer.mobile)|lower }}">
+        <div style="display:flex; align-items:center; justify-content:space-between">
+            <div style="display:flex; align-items:center; gap:13px; min-width:0">
+                <div class="avatar-letter" style="width:46px; height:46px; font-size:17px; background:{% if loop.index % 2 == 0 %}linear-gradient(135deg,#c084fc,#7c3aed){% else %}linear-gradient(135deg,#f472b6,#db2777){% endif %}">
+                    {{ (customer.name or "ع")[0] }}
+                </div>
+                <div style="min-width:0">
+                    <b style="font-size:15px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ customer.name }}</b>
+                    <span dir="ltr" style="color:var(--muted); font-size:11.5px">{{ customer.mobile }}</span>
+                </div>
+            </div>
+            <span class="pill pill-contacted" style="font-size:10.5px">يدوي</span>
+        </div>
+
+        {% if customer.email %}
+        <div style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); margin-top:12px">
+            <svg class="ic" style="width:14px;height:14px;color:#94a3b8"><use href="#i-send"/></svg>
+            <span dir="ltr" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ customer.email }}</span>
+        </div>
+        {% endif %}
+
+        <div style="display:flex; gap:8px; margin-top:14px">
+            <button class="btn btn-wa" style="flex:1; padding:9px; font-size:13px"
+                    onclick='openCusMsg("{{ customer.name|replace("'","") }}", "{{ fullDigits }}")'>
+                <svg class="ic-f" style="width:16px;height:16px"><use href="#i-wa"/></svg> مراسلة واتساب
+            </button>
+            <a href="tel:{{ fullDigits }}" class="icon-btn" title="اتصال" style="width:40px; height:40px; align-self:center">
+                <svg class="ic" style="width:17px;height:17px;color:#2563eb"><use href="#i-send"/></svg>
+            </a>
+            <form method="post" action="/customers/delete" onsubmit="return confirm('حذف هذا العميل؟')">
+                <input type="hidden" name="id" value="{{ customer.id }}">
+                <button type="submit" class="icon-btn" title="حذف" style="color:#dc2626">
+                    <svg class="ic" style="width:16px;height:16px"><use href="#i-logout"/></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if customers.length > 0 %}
+<div class="page-sub" style="margin:22px 0 12px">عملاء متجرك في سلة ({{ customers.length }})</div>
+{% endif %}
+<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:16px" id="customersGrid">
+    {% for customer in customers %}
+
+    {% set fullDigits = (customer.mobile or "")|replace(" ","")|replace("-","") %}
+
+    <div class="card card-hover cus-card" data-search="{{ ((customer.first_name or "") ~ " " ~ (customer.last_name or "") ~ " " ~ (customer.mobile or ""))|lower }}">
+        <div style="display:flex; align-items:center; justify-content:space-between">
+            <div style="display:flex; align-items:center; gap:13px; min-width:0">
+                <div class="avatar-letter" style="width:46px; height:46px; font-size:17px; background:{% if loop.index % 2 == 0 %}linear-gradient(135deg,#60a5fa,#2563eb){% else %}linear-gradient(135deg,#34d399,#059669){% endif %}">
+                    {{ ((customer.first_name or "") + (customer.last_name or ""))[0] or "ع" }}
+                </div>
+                <div style="min-width:0">
+                    <b style="font-size:15px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
+                        {{ customer.first_name or "" }} {{ customer.last_name or "" }}
+                    </b>
+                    <span dir="ltr" style="color:var(--muted); font-size:11.5px">{{ customer.mobile or "—" }}</span>
+                </div>
+            </div>
+            {% if customer.mobile %}
+            <button class="icon-btn" title="نسخ الرقم"
+                    onclick="navigator.clipboard.writeText('{{ fullDigits }}').then(function(){ showToast('✓ تم نسخ رقم الجوال') })">
+                <svg class="ic" style="width:14px;height:14px"><use href="#i-box"/></svg>
+            </button>
+            {% endif %}
+        </div>
+
+        {% if customer.email %}
+        <div style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); margin-top:12px">
+            <svg class="ic" style="width:14px;height:14px;color:#94a3b8"><use href="#i-send"/></svg>
+            <span dir="ltr" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ customer.email }}</span>
+        </div>
+        {% endif %}
+
+        {% if customer.mobile %}
+        <div style="display:flex; gap:8px; margin-top:14px">
+            <button class="btn btn-wa" style="flex:1; padding:9px; font-size:13px"
+                    onclick='openCusMsg("{{ (customer.first_name or "")|replace("'","") }}", "{{ fullDigits }}")'>
+                <svg class="ic-f" style="width:16px;height:16px"><use href="#i-wa"/></svg> مراسلة واتساب
+            </button>
+            <a href="tel:{{ fullDigits }}" class="icon-btn" title="اتصال" style="width:40px; height:40px; align-self:center">
+                <svg class="ic" style="width:17px;height:17px;color:#2563eb"><use href="#i-send"/></svg>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<!-- نافذة إضافة عميل -->
+<div class="modal-bg" id="addModal">
+    <div class="modal">
+        <div class="modal-head">
+            <b style="font-size:16px; display:flex; align-items:center; gap:9px">
+                <svg class="ic" style="width:19px;height:19px;color:#059669"><use href="#i-user"/></svg>
+                إضافة عميل جديد
+            </b>
+            <button type="button" class="icon-btn" onclick="closeAdd()">✕</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="/customers/add">
+                <label style="display:block; margin-bottom:12px">
+                    <span style="font-size:12.5px; color:var(--muted); font-weight:700">الاسم *</span>
+                    <input name="name" required maxlength="60" placeholder="مثال: محمد العتيبي"
+                        style="width:100%; margin-top:5px; border:1.5px solid var(--border); border-radius:11px; padding:11px 13px; font-family:inherit; font-size:14px; outline:none">
+                </label>
+                <label style="display:block; margin-bottom:12px">
+                    <span style="font-size:12.5px; color:var(--muted); font-weight:700">رقم الجوال (مع رمز الدولة) *</span>
+                    <input name="mobile" required dir="ltr" placeholder="9665xxxxxxxx"
+                        style="width:100%; margin-top:5px; border:1.5px solid var(--border); border-radius:11px; padding:11px 13px; font-family:inherit; font-size:14px; outline:none">
+                </label>
+                <label style="display:block; margin-bottom:18px">
+                    <span style="font-size:12.5px; color:var(--muted); font-weight:700">البريد الإلكتروني (اختياري)</span>
+                    <input name="email" type="email" dir="ltr" placeholder="name@email.com"
+                        style="width:100%; margin-top:5px; border:1.5px solid var(--border); border-radius:11px; padding:11px 13px; font-family:inherit; font-size:14px; outline:none">
+                </label>
+                <div style="display:flex; gap:9px">
+                    <button type="submit" class="btn btn-primary" style="flex:1">حفظ العميل</button>
+                    <button type="button" class="btn btn-ghost" onclick="closeAdd()">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة مراسلة -->
+<div class="modal-bg" id="cusModal">
+    <div class="modal">
+        <div class="modal-head">
+            <b style="font-size:16px; display:flex; align-items:center; gap:9px">
+                <svg class="ic-f" style="width:20px;height:20px;color:#22c55e"><use href="#i-wa"/></svg>
+                مراسلة — <span id="cName"></span>
+            </b>
+            <button class="icon-btn" onclick="document.getElementById('cusModal').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body">
+            <textarea id="cText"></textarea>
+            <div style="display:flex; gap:9px; margin-top:16px">
+                <button class="btn btn-wa" style="flex:1" onclick="sendCus()">
+                    <svg class="ic-f" style="width:18px;height:18px"><use href="#i-wa"/></svg> فتح واتساب وإرسال
+                </button>
+                <button class="btn btn-ghost" onclick="document.getElementById('cusModal').classList.remove('open')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+{% if added %}showToast("✓ تم إضافة العميل بنجاح");{% endif %}
+{% if addError %}setTimeout(function(){ showToast("❌ تأكد من الاسم ورقم الجوال (9 أرقام على الأقل)"); }, 300);{% endif %}
+
+function openAdd() { document.getElementById("addModal").classList.add("open"); }
+function closeAdd() { document.getElementById("addModal").classList.remove("open"); }
+document.getElementById("addModal").addEventListener("click", function(e){ if(e.target===this) closeAdd(); });
+
+var curPhone = "";
+function openCusMsg(name, phone) {
+  curPhone = phone;
+  document.getElementById("cName").textContent = name || "العميل";
+  document.getElementById("cText").value = "مرحباً " + name + " 👋";
+  document.getElementById("cusModal").classList.add("open");
+}
+function sendCus() {
+  var txt = document.getElementById("cText").value;
+  window.open("https://wa.me/" + curPhone.replace(/[^0-9]/g,"") + "?text=" + encodeURIComponent(txt), "_blank");
+}
+document.getElementById("cusSearch").addEventListener("input", function(){
+  var q = this.value.trim().toLowerCase();
+  document.querySelectorAll(".cus-card").forEach(function(c){
+    c.style.display = !q || c.dataset.search.indexOf(q) !== -1 ? "" : "none";
+  });
+});
+document.getElementById("addModal").querySelector("form").addEventListener("submit", function(){
+  setTimeout(function(){ closeAdd(); }, 100);
+});
+</script>
 {% endblock %}

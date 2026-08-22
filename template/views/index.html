@@ -1,16 +1,66 @@
 {% extends 'layout.html' %}
-{% block content %} {% if not isLogin %}
+{% block content %}
 
-{% else %}
-<h2> Welcome , <span style="font-weight: bold">{{ user.name }}</span>.</h2>
-<p> Email : <span style="font-weight: bold">{{ user.email }}</span></p>
+<div style="position:relative; overflow:hidden; border-radius:20px; padding:34px 32px; margin-bottom:22px;
+            background:
+              radial-gradient(500px 240px at 88% -30%,rgba(255,255,255,.28),transparent 60%),
+              linear-gradient(135deg,#075e54 0%,#128c7e 55%,#25d366 100%);
+            box-shadow:0 18px 44px -12px rgba(18,140,126,.45)">
+    <svg class="ic" viewBox="0 0 24 24" style="position:absolute; left:-26px; bottom:-38px; width:210px; height:210px; opacity:.13; stroke:#fff; stroke-width:1.2"><use href="#i-cart"/></svg>
+    <h1 style="color:#fff; font-size:25px; font-weight:900; letter-spacing:-.3px; margin-bottom:8px">
+        أهلاً بك، {{ user.name }} 👋
+    </h1>
+    <p style="color:rgba(255,255,255,.85); font-size:14.5px; line-height:1.9; max-width:520px">
+        {% if merchant and merchant.name %}هذه لوحة متجر <b>{{ merchant.name }}</b>. {% endif %}
+        تابع من هنا العملاء الذين كادوا يكملون الشراء… واستعدهم قبل أن ينسوا.
+    </p>
+    <a href="/abandoned" class="btn btn-white" style="margin-top:18px">
+        عرض السلات المتروكة
+        <svg class="ic" style="width:17px;height:17px"><use href="#i-arrow"/></svg>
+    </a>
+</div>
 
-{% for key, value in user.merchant %}
-<p>{{ key }}: <span style="font-weight: bold">{{ value }}</span></p>
-{% endfor %}
+<div class="page-title" style="font-size:16px; margin:6px 0 14px">كيف يعمل منقذ السلات؟</div>
 
-<p>
-  <div>Store Avatar:</div>
-  <img src="{{userDetails.merchant.avatar}}" width="100" />
-</p>
-{% endif %} {% endblock %}
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px">
+
+    <div class="card card-hover">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px">
+            <div class="avatar-letter" style="background:linear-gradient(135deg,#fbbf24,#f59e0b); width:42px; height:42px; border-radius:13px">١</div>
+            <svg class="ic" style="width:26px;height:26px;color:#cbd5e1"><use href="#i-clock"/></svg>
+        </div>
+        <b style="font-size:15.5px">عميل يتوقف عن الشراء</b>
+        <p style="color:var(--muted); font-size:13px; line-height:1.8; margin-top:6px">يضيف المنتجات لسلته ثم يغادر دون إتمام الطلب — كما يفعل 70% من المتسوقين.</p>
+    </div>
+
+    <div class="card card-hover">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px">
+            <div class="avatar-letter" style="background:linear-gradient(135deg,#60a5fa,#3b82f6); width:42px; height:42px; border-radius:13px">٢</div>
+            <svg class="ic" style="width:26px;height:26px;color:#cbd5e1"><use href="#i-zap"/></svg>
+        </div>
+        <b style="font-size:15.5px">يصلك تنبيه تلقائي</b>
+        <p style="color:var(--muted); font-size:13px; line-height:1.8; margin-top:6px">سلة تخبر التطبيق فور اعتماد السلة متروكة، فيظهر العميل في لوحتك مباشرة.</p>
+    </div>
+
+    <div class="card card-hover">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px">
+            <div class="avatar-letter" style="background:linear-gradient(135deg,#34d399,#059669); width:42px; height:42px; border-radius:13px">٣</div>
+            <svg class="ic-f" style="width:26px;height:26px;color:#cbd5e1"><use href="#i-wa"/></svg>
+        </div>
+        <b style="font-size:15.5px">ترسل تذكيراً وتستعيد البيع</b>
+        <p style="color:var(--muted); font-size:13px; line-height:1.8; margin-top:6px">رسالة واتساب جاهزة برابط السلة نفسه — عميل واحد مستعيد قد يعني عشرات الريالات شهرياً.</p>
+    </div>
+
+</div>
+
+<div class="card" style="margin-top:16px; display:flex; gap:14px; align-items:flex-start; border-right:4px solid #f59e0b; background:linear-gradient(135deg,#fffbeb,#ffffff)">
+    <svg class="ic" style="color:#f59e0b; width:24px;height:24px"><use href="#i-zap"/></svg>
+    <div>
+        <b style="font-size:14.5px">نصيحة الخبراء</b>
+        <p style="color:var(--muted); font-size:13px; line-height:1.8; margin-top:4px">
+            أرسل التذكير خلال الساعة الأولى من ترك السلة — فرص الاستعادة تكون أعلى بمرتين ونصف مقارنة بالتأخير ليوم كامل.
+        </p>
+    </div>
+</div>
+
+{% endblock %}

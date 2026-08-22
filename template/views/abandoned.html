@@ -1,0 +1,262 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+{% set total = stats.new + stats.contacted + stats.recovered %}
+{% set storeName = user.merchant.name or "" %}
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:22px">
+    <div>
+        <div class="page-title">السلات المتروكة</div>
+        <div class="page-sub">تواصل مع العملاء قبل أن ينسوا — بضغطة واحدة</div>
+    </div>
+    <a href="/abandoned" class="btn btn-ghost" style="flex-shrink:0">
+        <svg class="ic" style="width:16px;height:16px"><use href="#i-clock"/></svg> تحديث
+    </a>
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:18px">
+
+    <div class="card card-hover" style="padding:19px 20px">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+            <span style="font-size:12.5px; font-weight:700; color:var(--muted)">مبيعات مستعادة</span>
+            <span style="width:38px; height:38px; border-radius:11px; background:#d9fdd3; color:#0a6847; display:grid; place-items:center"><svg class="ic" style="width:19px;height:19px"><use href="#i-wallet"/></svg></span>
+        </div>
+        <b style="font-size:26px; font-weight:900">{{ kpis.recoveredAmount|round(2) }} <span style="font-size:13px; font-weight:700; color:var(--muted)">ر.س</span></b>
+        <div style="margin-top:7px"><span class="pill pill-recovered">{{ stats.recovered }} سلة أكملت الشراء</span></div>
+    </div>
+
+    <div class="card card-hover" style="padding:19px 20px">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+            <span style="font-size:12.5px; font-weight:700; color:var(--muted)">رسائل مُرسلة</span>
+            <span style="width:38px; height:38px; border-radius:11px; background:#e0f2fe; color:#0369a1; display:grid; place-items:center"><svg class="ic" style="width:19px;height:19px"><use href="#i-send"/></svg></span>
+        </div>
+        <b style="font-size:26px; font-weight:900">{{ kpis.sentCount }}</b>
+        <div style="margin-top:7px; color:var(--muted); font-size:12px">تذكير وصل لعملائك</div>
+    </div>
+
+    <div class="card card-hover" style="padding:19px 20px">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+            <span style="font-size:12.5px; font-weight:700; color:var(--muted)">معدل الاستعادة</span>
+            <span style="width:38px; height:38px; border-radius:11px; background:#fef3c7; color:#b45309; display:grid; place-items:center"><svg class="ic" style="width:19px;height:19px"><use href="#i-chart"/></svg></span>
+        </div>
+        <b style="font-size:26px; font-weight:900">{{ kpis.rate }}%</b>
+        <div style="height:7px; background:#f0f2f5; border-radius:99px; margin-top:10px; overflow:hidden">
+            <div style="width:{{ kpis.rate }}%; height:100%; background:linear-gradient(90deg,#25d366,#128c7e); border-radius:99px; transition:.4s"></div>
+        </div>
+    </div>
+
+    <div class="card card-hover" style="padding:19px 20px">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+            <span style="font-size:12.5px; font-weight:700; color:var(--muted)">بانتظار التواصل</span>
+            <span style="width:38px; height:38px; border-radius:11px; background:#fff7ed; color:#c2410c; display:grid; place-items:center"><svg class="ic" style="width:19px;height:19px"><use href="#i-clock"/></svg></span>
+        </div>
+        <b style="font-size:26px; font-weight:900">{{ stats.new }}</b>
+        <div style="margin-top:7px; color:var(--muted); font-size:12px">{% if stats.new > 0 %}⚡ الأتمتة ستتواصل معهم{% else %}لا يوجد شيء الآن{% endif %}</div>
+    </div>
+
+</div>
+
+<div class="card" style="padding:16px 22px; margin-bottom:20px">
+    <div class="flow">
+        <div class="flow-step hot">
+            <div class="flow-dot"><svg class="ic" style="width:23px;height:23px"><use href="#i-bag"/></svg></div>
+            <b>العميل يترك السلة</b><span>إشارة لحظية من متجرك</span>
+        </div>
+        <div class="flow-step hot">
+            <div class="flow-dot"><svg class="ic" style="width:23px;height:23px"><use href="#i-clock"/></svg></div>
+            <b>انتظار ذكي</b><span>حسب المدة التي تحددها</span>
+        </div>
+        <div class="flow-step hot">
+            <div class="flow-dot"><svg class="ic-f" style="width:23px;height:23px"><use href="#i-wa"/></svg></div>
+            <b>تذكير تلقائي</b><span>واتساب من رقمك أنت</span>
+        </div>
+        <div class="flow-step hot">
+            <div class="flow-dot"><svg class="ic" style="width:23px;height:23px"><use href="#i-check"/></svg></div>
+            <b>استرداد البيع</b><span>العميل يكمل شراءه 🎉</span>
+        </div>
+    </div>
+</div>
+
+{% if carts.length === 0 %}
+<div class="card" style="text-align:center; padding:56px 24px">
+    <div style="width:92px; height:92px; margin:0 auto 20px; border-radius:28px; background:linear-gradient(135deg,#f1f5f9,#e2e8f0); display:grid; place-items:center">
+        <svg class="ic" style="width:44px;height:44px;color:#94a3b8"><use href="#i-bag"/></svg>
+    </div>
+    <h3 style="font-size:18px; font-weight:800; margin-bottom:8px">لا توجد سلات متروكة بعد</h3>
+    <p style="color:var(--muted); font-size:13.5px; line-height:2; max-width:440px; margin:0 auto">
+        عندما يتوقف عميل عن إتمام الشراء في متجرك، سيظهر هنا تلقائياً خلال حوالي ساعة من توقفه.<br>
+        جرّب بنفسك: أضف منتجات لسلتك في المتجر التجريبي ثم اغادر دون إتمام الطلب.
+    </p>
+</div>
+{% else %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:16px">
+    <div class="tabs">
+        <button class="tab active" onclick="filterCarts('all', this)">الكل <span class="cnt">{{ total }}</span></button>
+        <button class="tab" onclick="filterCarts('new', this)">جديدة <span class="cnt">{{ stats.new }}</span></button>
+        <button class="tab" onclick="filterCarts('contacted', this)">تم التواصل <span class="cnt">{{ stats.contacted }}</span></button>
+        <button class="tab" onclick="filterCarts('recovered', this)">مستعادة <span class="cnt">{{ stats.recovered }}</span></button>
+    </div>
+    <label class="search-box">
+        <svg class="ic" style="width:16px;height:16px"><use href="#i-cart"/></svg>
+        <input type="text" id="cartSearch" placeholder="ابحث باسم العميل أو رقم السلة…">
+    </label>
+</div>
+
+<div class="card" style="padding:8px 12px 4px; overflow-x:auto">
+    <table class="tbl">
+        <thead>
+            <tr>
+                <th>العميل</th>
+                <th>قيمة السلة</th>
+                <th>الحالة</th>
+                <th>متروكة منذ</th>
+                <th style="text-align:left">إجراءات</th>
+            </tr>
+        </thead>
+        <tbody id="cartsBody">
+        {% for cart in carts %}
+            <tr data-status="{{ cart.status }}" data-name="{{ (cart.customer_name or "عميل")|lower }}" data-cid="{{ cart.cart_id }}">
+                <td>
+                    <div style="display:flex; align-items:center; gap:11px">
+                        <div class="avatar-letter" style="background:{% if loop.index % 2 == 0 %}linear-gradient(135deg,#60a5fa,#2563eb){% else %}linear-gradient(135deg,#34d399,#059669){% endif %}">
+                            {{ (cart.customer_name or "ع")[0] }}
+                        </div>
+                        <div>
+                            <b style="font-size:14px; display:block">{{ cart.customer_name or "عميل" }}</b>
+                            <span dir="ltr" style="color:var(--muted); font-size:11.5px">{{ cart.customer_mobile or "" }}</span>
+                        </div>
+                    </div>
+                </td>
+                <td><b style="font-size:14.5px">{{ cart.total_amount }}</b> <span style="color:var(--muted); font-size:12px">{{ cart.currency }}</span></td>
+                <td>
+                    {% if cart.status === "new" %}<span class="pill pill-new">جديدة</span>
+                    {% elif cart.status === "contacted" %}<span class="pill pill-contacted">تم التواصل</span>
+                    {% else %}<span class="pill pill-recovered">مستعادة</span>{% endif %}
+                </td>
+                <td><span style="display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:13px">
+                    <svg class="ic" style="width:14px;height:14px"><use href="#i-clock"/></svg>{{ cart.time_ago }}
+                </span></td>
+                <td style="text-align:left">
+                    <div style="display:inline-flex; gap:7px; align-items:center">
+                        {% if cart.whatsapp_url and cart.status !== "recovered" %}
+                        <button class="btn btn-wa" style="padding:8px 15px; font-size:13px"
+                            onclick='openReminder(this, {{ cart.cart_id }}, "{{ (cart.customer_name or "")|replace('"',"") }}", "{{ cart.customer_mobile|replace(" ","") }}", "{{ cart.checkout_url }}")'>
+                            <svg class="ic-f" style="width:17px;height:17px"><use href="#i-wa"/></svg> تذكير
+                        </button>
+                        {% if cart.customer_mobile %}
+                        {% set telDigits = cart.customer_mobile|replace(" ","")|replace("-","") %}
+                        <a href="tel:{{ telDigits }}" class="icon-btn" title="اتصال">
+                            <svg class="ic" style="width:16px;height:16px"><use href="#i-send"/></svg>
+                        </a>
+                        {% endif %}
+                        <button class="icon-btn" title="نسخ الرسالة"
+                            onclick='copyMsg({{ cart.cart_id }}, "{{ (cart.customer_name or "")|replace('"',"") }}", "{{ cart.checkout_url }}")'>
+                            <svg class="ic" style="width:15px;height:15px"><use href="#i-box"/></svg>
+                        </button>
+                        {% endif %}
+                        {% if cart.status === "new" %}
+                        <form method="post" action="/abandoned/contact" style="display:inline">
+                            <input type="hidden" name="merchant" value="{{ user.merchant.id }}">
+                            <input type="hidden" name="cart_id" value="{{ cart.cart_id }}">
+                            <button type="submit" class="icon-btn" title="تعليم كـ تم التواصل">
+                                <svg class="ic" style="width:16px;height:16px;color:#059669"><use href="#i-check"/></svg>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% set defaultMsg = "مرحباً {name} 👋\nلاحظنا أنك تركت بعض المنتجات في سلتك" %}
+
+<div class="modal-bg" id="remModal">
+    <div class="modal">
+        <div class="modal-head">
+            <b style="font-size:16px; display:flex; align-items:center; gap:9px">
+                <svg class="ic-f" style="width:20px;height:20px;color:#22c55e"><use href="#i-wa"/></svg>
+                رسالة التذكير — <span id="mName"></span>
+            </b>
+            <button class="icon-btn" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <textarea id="mText" oninput="updateBubble()"></textarea>
+            <p style="color:var(--muted); font-size:11.5px; margin-top:8px">عدّل الرسالة كما تشاء ثم أرسلها — رابط السلة يُرسل تلقائياً معها.</p>
+            <div style="margin-top:14px">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                    <svg class="ic-f" style="width:15px;height:15px;color:#25d366"><use href="#i-wa"/></svg>
+                    <span style="font-size:12px; font-weight:700; color:var(--muted)">معاينة كما ستظهر للعميل</span>
+                </div>
+                <div class="wa-chat">
+                    <div class="wa-bubble">
+                        <span id="bubbleText"></span>
+                        <div class="wa-time">{{ storeName }} ✓✓</div>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; gap:9px; margin-top:16px">
+                <button class="btn btn-wa" style="flex:1" onclick="sendWa()">
+                    <svg class="ic-f" style="width:18px;height:18px"><use href="#i-wa"/></svg> فتح واتساب وإرسال
+                </button>
+                <button class="btn btn-ghost" onclick="closeModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var STORE = "{{ storeName }}";
+function buildMsg(name, url) {
+  return "مرحباً " + name + " 👋\n" +
+         "لاحظنا أنك تركت بعض المنتجات في سلتك في متجر " + STORE + " 😊\n" +
+         "أكمل طلبك الآن من هنا:\n" + url;
+}
+var curPhone = "";
+function openReminder(btn, cid, name, phone, url) {
+  curPhone = phone;
+  document.getElementById("mName").textContent = name || "العميل";
+  document.getElementById("mText").value = buildMsg(name, url);
+  updateBubble();
+  document.getElementById("remModal").classList.add("open");
+}
+function updateBubble() {
+  document.getElementById("bubbleText").textContent = document.getElementById("mText").value;
+}
+function closeModal() { document.getElementById("remModal").classList.remove("open"); }
+document.getElementById("remModal").addEventListener("click", function(e){ if(e.target===this) closeModal(); });
+function sendWs(phone, text) {
+  window.open("https://wa.me/" + phone.replace(/[^0-9]/g,"") + "?text=" + encodeURIComponent(text), "_blank");
+}
+function sendWa() {
+  sendWs(curPhone, document.getElementById("mText").value);
+  setTimeout(function(){ location.reload(); }, 1200);
+}
+function copyMsg(cid, name, url) {
+  var msg = buildMsg(name, url);
+  navigator.clipboard.writeText(msg).then(function(){ showToast("✓ تم نسخ رسالة التذكير"); });
+}
+function filterCarts(status, btn) {
+  document.querySelectorAll(".tabs .tab").forEach(function(t){ t.classList.remove("active"); });
+  btn.classList.add("active");
+  applyCartFilters(status);
+}
+function applyCartFilters(status) {
+  var q = (document.getElementById("cartSearch").value || "").trim().toLowerCase();
+  document.querySelectorAll("#cartsBody tr").forEach(function(tr){
+    var okStatus = status === "all" || tr.dataset.status === status;
+    var okSearch = !q || tr.dataset.name.indexOf(q) !== -1 || tr.dataset.cid.indexOf(q) !== -1;
+    tr.style.display = okStatus && okSearch ? "" : "none";
+  });
+}
+document.getElementById("cartSearch").addEventListener("input", function(){
+  var active = document.querySelector(".tabs .tab.active");
+  applyCartFilters(active ? active.getAttribute("onclick").match(/'(\w+)'/)[1] : "all");
+});
+</script>
+
+{% endif %}
+{% endblock %}

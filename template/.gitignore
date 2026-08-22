@@ -2,4 +2,9 @@
 node_modules
 server.log
 server-error.log
+tunnel.log
 *.sqlite
+*.sqlite-journal
+.wweb-sessions/
+.wwebjs_cache/
+

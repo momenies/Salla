@@ -3,10 +3,15 @@ const { Sequelize, DataTypes } = require("sequelize");
 const OauthTokens = require("./models/oauthtokens");
 const PasswordResets = require("./models/passwordresets");
 const User = require("./models/user");
+const AbandonedCarts = require("./models/abandonedcarts");
+const MerchantSettings = require("./models/merchantsettings");
+const ManualCustomers = require("./models/manualcustomers");
+const Messages = require("./models/messages");
+const Automations = require("./models/automations");
 
 // We export the sequelize connection instance to be used around our app.
 module.exports = {
-  connect: () => {
+  connect: async () => {
     // In a real app, you should keep the database connection URL as an environment variable.
     // But for this example, we will just use a local SQLite database.
     // const sequelize = new Sequelize(process.env.DB_CONNECTION_URL);
@@ -31,8 +36,11 @@ module.exports = {
       OauthTokens,
       PasswordResets,
       User,
-      // Add more models here...
-      // require('./models/item'),
+      AbandonedCarts,
+      MerchantSettings,
+      ManualCustomers,
+      Messages,
+      Automations,
     ];
 
     // We define all models according to their files.
@@ -42,13 +50,20 @@ module.exports = {
     }
 
     // We execute any associates  after the models are defined .
+    // Wait for tables to be ready before returning the connection.
+    await sequelize.sync();
 
-    sequelize
-      .sync()
-      .then((data) => {})
-      .catch((err) => {
-        console.log("Error in creating and connecting database", err);
-      });
+    // lightweight column migrations (SQLite sync() does not alter existing tables)
+    try {
+      const qi = sequelize.getQueryInterface();
+      const table = sequelize.models.MerchantSettings.getTableName();
+      const cols = await qi.describeTable(table);
+      if (!cols.channel) await qi.addColumn(table, "channel", { type: DataTypes.STRING });
+      if (!cols.msg_template) await qi.addColumn(table, "msg_template", { type: DataTypes.TEXT });
+    } catch (e) {
+      console.log("migration note:", e.message);
+    }
+
     return sequelize;
   },
 };

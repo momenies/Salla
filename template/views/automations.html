@@ -1,0 +1,219 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+{% set storeName = user.merchant.name or "متجرك" %}
+{% set kindPills = {"cart_reminder":"pill-contacted","order_thanks":"pill-recovered","shipping_update":"pill-new","review_request":"pill-recovered","cod_confirm":"pill-new"} %}
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:22px">
+    <div>
+        <div class="page-title">مركز الأتمتة</div>
+        <div class="page-sub">سيناريوهات واتساب تعمل عنك على مدار الساعة — فعّلها مرة وانتهى الأمر</div>
+    </div>
+    <a href="/automations" class="btn btn-ghost" style="flex-shrink:0">
+        <svg class="ic" style="width:16px;height:16px"><use href="#i-zap"/></svg> تحديث
+    </a>
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:18px">
+
+    <div class="card" style="padding:19px 20px">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
+            <span style="font-size:12.5px; font-weight:700; color:var(--muted)">بانتظار الإرسال</span>
+            <span style="width:36px; height:36px; border-radius:11px; background:#fff7ed; color:#c2410c; display:grid; place-items:center"><svg class="ic" style="width:18px;height:18px"><use href="#i-clock"/></svg></span>
+        </div>
+        <b style="font-size:25px; font-weight:900">{{ stats.pending }}</b>
+    </div>
+
+    <div class="card" style="padding:19px 20px">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
+            <span style="font-size:12.5px; font-weight:700; color:var(--muted)">أُرسلت آخر 24 ساعة</span>
+            <span style="width:36px; height:36px; border-radius:11px; background:#d9fdd3; color:#0a6847; display:grid; place-items:center"><svg class="ic-f" style="width:18px;height:18px"><use href="#i-send"/></svg></span>
+        </div>
+        <b style="font-size:25px; font-weight:900">{{ stats.sentToday }}</b>
+    </div>
+
+    <div class="card" style="padding:19px 20px">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
+            <span style="font-size:12.5px; font-weight:700; color:var(--muted)">إجمالي الرسائل المرسلة</span>
+            <span style="width:36px; height:36px; border-radius:11px; background:#e0f2fe; color:#0369a1; display:grid; place-items:center"><svg class="ic" style="width:18px;height:18px"><use href="#i-send"/></svg></span>
+        </div>
+        <b style="font-size:25px; font-weight:900">{{ stats.sentTotal }}</b>
+    </div>
+
+    <div class="card" style="padding:19px 20px">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
+            <span style="font-size:12.5px; font-weight:700; color:var(--muted)">فشل الإرسال</span>
+            <span style="width:36px; height:36px; border-radius:11px; background:#fef2f2; color:#b91c1c; display:grid; place-items:center"><svg class="ic" style="width:18px;height:18px"><use href="#i-zap"/></svg></span>
+        </div>
+        <b style="font-size:25px; font-weight:900">{{ stats.failed }}</b>
+    </div>
+
+</div>
+
+<div class="card" style="padding:14px 20px; margin-bottom:20px; display:flex; gap:12px; align-items:flex-start; background:linear-gradient(135deg,#eff6ff,#ffffff); border-color:#bfdbfe">
+    <svg class="ic" style="width:22px;height:22px;color:#2563eb; flex-shrink:0; margin-top:2px"><use href="#i-shield"/></svg>
+    <div style="font-size:13px; line-height:1.9; color:#1e3a8a">
+        <b>ملاحظة لطريقة Meta Cloud API:</b> واتساب الرسمي يتطلب قوالب معتمدة مسبقاً. أنشئ في لوحة Meta قوالب بأسماء:
+        <b dir="ltr">order_thanks</b>، <b dir="ltr">shipping_update</b>، <b dir="ltr">review_request</b>، <b dir="ltr">cod_confirm</b>
+        (كل قالب بثلاثة متغيرات: الاسم ثم المتجر ثم الرابط).
+        أما طريقة الباركود فترسل نصوص هذه الصفحات مباشرة دون أي خطوات إضافية.
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:16px; margin-bottom:22px">
+
+{% for sc in scenarios %}
+    <div class="card" style="padding:0; overflow:hidden">
+        <form method="post" action="/automations/save" id="form-{{ sc.key }}">
+            <input type="hidden" name="key" value="{{ sc.key }}">
+            <input type="hidden" name="delay_minutes"
+                   value="{% if sc.key === 'review_request' %}{{ sc.delay_minutes }}{% else %}0{% endif %}">
+
+            <div style="display:flex; align-items:center; gap:13px; padding:18px 20px 14px">
+                <span style="width:44px; height:44px; border-radius:14px; flex-shrink:0;
+                             {% if sc.enabled %}background:var(--grad); color:#fff; box-shadow:0 6px 14px rgba(37,211,102,.35){% else %}background:#f0f2f5; color:var(--muted){% endif %};
+                             display:grid; place-items:center">
+                    <svg class="ic" style="width:21px;height:21px"><use href="#{{ sc.icon }}"/></svg>
+                </span>
+                <div style="flex:1">
+                    <b style="font-size:15px; display:block">{{ sc.label }}</b>
+                    <span style="color:var(--muted); font-size:11.5px; line-height:1.7; display:block; margin-top:2px">{{ sc.desc }}</span>
+                </div>
+                <label style="position:relative; width:46px; height:26px; flex-shrink:0; cursor:pointer">
+                    <input type="checkbox" name="enabled" data-switch="{{ sc.key }}"
+                           onchange="toggleScenario('{{ sc.key }}')" {% if sc.enabled %}checked{% endif %}
+                           style="position:absolute; opacity:0; inset:0; cursor:pointer">
+                    <span id="track-{{ sc.key }}" style="position:absolute; inset:0; border-radius:99px; transition:.2s;
+                          background:{% if sc.enabled %}var(--wa){% else %}#cbd5e1{% endif %}"></span>
+                    <span id="knob-{{ sc.key }}" style="position:absolute; top:3px; inset-inline-end:{% if sc.enabled %}3px{% else %}23px{% endif %}; width:20px; height:20px;
+                          background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25)"></span>
+                </label>
+            </div>
+
+            <div id="body-{{ sc.key }}" style="border-top:1px solid var(--border); padding:16px 20px 20px;
+                 {% if not sc.enabled %}display:none{% endif %}">
+                {% if sc.key === 'review_request' %}
+                <label style="display:block; margin-bottom:12px">
+                    <span style="font-size:12px; color:var(--muted); font-weight:700">أرسل التقييم بعد التسليم بـ</span>
+                    <select name="delay_select" onchange="this.form.delay_minutes.value = this.value * 1440"
+                            style="width:100%; margin-top:5px; border:1.5px solid var(--border); border-radius:10px; padding:9px 12px; font-family:inherit; font-size:13px; background:#fff; outline:none">
+                        <option value="1" {% if sc.delay_minutes === 1440 %}selected{% endif %}>يوم واحد</option>
+                        <option value="2" {% if sc.delay_minutes === 2880 %}selected{% endif %}>يومان</option>
+                        <option value="3" {% if sc.delay_minutes === 4320 %}selected{% endif %}>3 أيام</option>
+                        <option value="7" {% if sc.delay_minutes === 10080 %}selected{% endif %}>أسبوع</option>
+                    </select>
+                </label>
+                {% else %}
+                <div style="margin-bottom:12px"><span class="pill pill-new">⏱ تُرسل فوراً عند وقوع الحدث</span></div>
+                {% endif %}
+
+                <textarea name="msg_template" data-tpl="{{ sc.key }}" oninput="updateBubble('{{ sc.key }}')"
+                          style="width:100%; min-height:110px; border:1.5px solid var(--border); border-radius:12px;
+                                 padding:12px 14px; font-family:inherit; font-size:13px; line-height:1.85; resize:vertical; outline:none"
+                          onfocus="this.style.borderColor='#25d366'" onblur="this.style.borderColor='var(--border)'">{{ sc.msg_template }}</textarea>
+
+                <div style="margin-top:10px">
+                    <div class="wa-chat" style="min-height:80px">
+                        <div class="wa-bubble">
+                            <span data-bubble="{{ sc.key }}"></span>
+                            <div class="wa-time">{{ storeName }} ✓✓</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:14px; padding:11px">
+                    <svg class="ic" style="width:17px;height:17px"><use href="#i-check"/></svg> حفظ السيناريو
+                </button>
+            </div>
+        </form>
+    </div>
+{% endfor %}
+
+</div>
+
+<div class="card" style="padding:8px 12px 4px; overflow-x:auto">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 10px 10px">
+        <b style="font-size:15px">آخر الرسائل — سجل موحد لكل الأتمتات</b>
+        <span class="pill pill-recovered">{{ stats.sentTotal }} مرسلة</span>
+    </div>
+    {% if messages.length === 0 %}
+    <p style="color:var(--muted); font-size:13px; padding:8px 10px 18px; line-height:1.9">
+        لا رسائل بعد. فعّل سيناريو واحداً على الأقل، وستظهر كل رسالة تُجدول أو تُرسل هنا لحظياً.
+    </p>
+    {% else %}
+    <table class="tbl">
+        <thead>
+            <tr><th>العميل</th><th>النوع</th><th>الحالة</th><th>القناة</th><th>التوقيت</th></tr>
+        </thead>
+        <tbody>
+        {% for m in messages %}
+            <tr>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px">
+                        <div class="avatar-letter" style="width:32px; height:32px; font-size:13px;
+                             background:{% if loop.index % 2 == 0 %}linear-gradient(135deg,#60a5fa,#2563eb){% else %}linear-gradient(135deg,#34d399,#059669){% endif %}">
+                            {{ (m.customer_name or "ع")[0] }}
+                        </div>
+                        <div>
+                            <b style="font-size:13.5px; display:block">{{ m.customer_name or "عميل" }}</b>
+                            <span dir="ltr" style="color:var(--muted); font-size:11px">{{ m.customer_mobile }}</span>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="pill {{ kindPills[m.kind] or 'pill-new' }}">{{ m.kind_label }}</span>{% if m.order_id %} <span style="color:var(--muted); font-size:11.5px">#{{ m.order_id }}</span>{% endif %}</td>
+                <td>
+                    {% if m.status === "sent" %}<span class="pill pill-recovered">أُرسلت</span>
+                    {% elif m.status === "pending" %}<span class="pill pill-new">مجدولة</span>
+                    {% elif m.status === "failed" %}<span class="pill pill-new" style="background:#fee2e2; color:#b91c1c">فشلت</span>
+                    {% else %}<span class="pill pill-contacted">ملغاة</span>{% endif %}
+                    {% if m.error %}<div title="{{ m.error }}" style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#b91c1c; font-size:10.5px">{{ m.error }}</div>{% endif %}
+                </td>
+                <td style="color:var(--muted); font-size:12.5px">{% if m.channel === "cloud" %}Meta API{% elif m.channel === "wweb" %}باركود{% else %}—{% endif %}</td>
+                <td style="color:var(--muted); font-size:12.5px">
+                    {% if m.status === "sent" %}أُرسلت {{ m.time_ago }}{% else %}{{ m.time_ago }}{% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<script>
+{% if saved %}showToast("✓ تم حفظ السيناريو بنجاح");{% endif %}
+
+var TPL_STORE = "{{ storeName|replace('"',"") }}";
+function sampleFill(t) {
+  return t
+    .replace(/\[الاسم\]/g, "أحمد")
+    .replace(/\[المتجر\]/g, TPL_STORE)
+    .replace(/\[رقم الطلب\]/g, "194832")
+    .replace(/\[الرابط\]/g, "https://demostore.salla.sa/cart/abc123");
+}
+function updateBubble(key) {
+  var ta = document.querySelector('[data-tpl="' + key + '"]');
+  var bub = document.querySelector('[data-bubble="' + key + '"]');
+  if (ta && bub) bub.textContent = sampleFill(ta.value);
+}
+document.querySelectorAll('[data-tpl]').forEach(function(ta){
+  updateBubble(ta.getAttribute('data-tpl'));
+});
+
+function toggleScenario(key) {
+  var on = document.querySelector('[data-switch="' + key + '"]').checked;
+  document.getElementById("track-" + key).style.background = on ? "#25d366" : "#cbd5e1";
+  document.getElementById("knob-" + key).style.insetInlineEnd = on ? "3px" : "23px";
+  document.getElementById("body-" + key).style.display = on ? "block" : "none";
+  if (!on) {
+    // keep the checkbox unchecked in submission but still save the OFF state instantly
+    var form = document.getElementById("form-" + key);
+    var fd = new FormData(form);
+    fd.set("enabled", "");
+    fetch(form.action, { method: "POST", body: new URLSearchParams(fd), redirect: "manual" })
+      .then(function(){ showToast("تم إيقاف السيناريو"); })
+      .catch(function(){});
+  }
+}
+</script>
+
+{% endblock %}
