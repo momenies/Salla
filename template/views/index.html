@@ -1,16 +1,200 @@
-{% extends 'layout.html' %}
-{% block content %} {% if not isLogin %}
+{% extends "layout.html" %}
+{% block content %}
+
+{% if not isLogin %}
+{# ==================== صفحة الزائر ==================== #}
+
+<section class="hero">
+  <span class="pill">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 15 9l7 .5-5.3 4.6L18.3 21 12 17.2 5.7 21l1.6-6.9L2 9.5 9 9Z"/></svg>
+    جاهز للتثبيت على متجر سلة
+  </span>
+
+  <h1>{{ appName }}</h1>
+  <p>اربط متجرك على سلة خلال أقل من دقيقة، وتابع طلباتك وعملاءك من لوحة واحدة بسيطة وسريعة.</p>
+
+  <div class="row">
+    <a class="btn btn--primary btn--lg" href="/login">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg>
+      تثبيت التطبيق على متجري
+    </a>
+    <a class="btn btn--ghost btn--lg" href="https://docs.salla.dev" target="_blank" rel="noopener">تعرّف على المزيد</a>
+  </div>
+</section>
+
+<section class="grid grid--cards">
+  <article class="feature">
+    <span class="feature__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    </span>
+    <h3>متابعة الطلبات</h3>
+    <p>اعرض طلبات متجرك بحالاتها ومبالغها ومنتجاتها في جدول واضح ومرتّب.</p>
+  </article>
+
+  <article class="feature">
+    <span class="feature__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+    </span>
+    <h3>قاعدة عملائك</h3>
+    <p>كل بيانات عملائك في مكان واحد، مع إمكانية التواصل معهم مباشرة عبر الجوال أو البريد.</p>
+  </article>
+
+  <article class="feature">
+    <span class="feature__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </span>
+    <h3>ربط آمن ومعتمد</h3>
+    <p>الربط يتم عبر تسجيل دخول سلة الرسمي (OAuth)، ولا نطّلع على كلمة مرور متجرك إطلاقاً.</p>
+  </article>
+</section>
+
+<section class="stack">
+  <div class="section-title">
+    <h2>كيف يعمل؟</h2>
+    <p>ثلاث خطوات فقط ويصبح التطبيق جاهزاً</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div>
+        <strong>اضغط على «تثبيت التطبيق»</strong>
+        <p>سيتم تحويلك إلى صفحة تسجيل الدخول الرسمية في سلة.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div>
+        <strong>وافق على الصلاحيات المطلوبة</strong>
+        <p>سلة ستوضح لك بالضبط ما الذي يستطيع التطبيق الاطّلاع عليه.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div>
+        <strong>ابدأ الاستخدام فوراً</strong>
+        <p>ستعود تلقائياً إلى لوحة التحكم وبياناتك جاهزة أمامك.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 {% else %}
-<h2> Welcome , <span style="font-weight: bold">{{ user.name }}</span>.</h2>
-<p> Email : <span style="font-weight: bold">{{ user.email }}</span></p>
+{# ==================== لوحة التحكم ==================== #}
+{% set store = merchant or user.merchant %}
 
-{% for key, value in user.merchant %}
-<p>{{ key }}: <span style="font-weight: bold">{{ value }}</span></p>
-{% endfor %}
+<section class="card">
+  <div class="card__body">
+    <div class="hero-head">
+      {% if store.avatar %}
+      <img class="avatar avatar--xl" src="{{ store.avatar }}" alt="شعار {{ store.name }}">
+      {% else %}
+      <span class="avatar avatar--xl" aria-hidden="true">{{ store.name | truncate(1, true, "") or "س" }}</span>
+      {% endif %}
 
-<p>
-  <div>Store Avatar:</div>
-  <img src="{{userDetails.merchant.avatar}}" width="100" />
-</p>
-{% endif %} {% endblock %}
+      <div class="stack" style="gap: 6px; min-width: 0">
+        <h1 style="font-size: 1.45rem">أهلاً بك، {{ user.name or "صاحب المتجر" }} 👋</h1>
+        <p class="muted">
+          أنت متصل الآن بمتجر <strong>{{ store.name or "—" }}</strong>.
+          يمكنك متابعة الطلبات والعملاء من القائمة الجانبية.
+        </p>
+        <div class="row" style="margin-top: 6px">
+          <a class="btn btn--primary btn--sm" href="/orders">عرض الطلبات</a>
+          <a class="btn btn--ghost btn--sm" href="/customers">عرض العملاء</a>
+          {% if store.domain %}
+          <a class="btn btn--quiet btn--sm" href="{{ store.domain }}" target="_blank" rel="noopener">زيارة المتجر ↗</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="grid grid--stats">
+  <article class="stat">
+    <div class="stat__top">
+      <span class="stat__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18l-1.5 11a1 1 0 0 1-1 .9H5.5a1 1 0 0 1-1-.9Z"/><path d="M3 9 5 3h14l2 6"/></svg>
+      </span>
+      <span class="stat__label">المتجر</span>
+    </div>
+    <div class="stat__value" style="font-size: 20px">{{ store.name or "—" }}</div>
+    <div class="stat__hint">المعرّف: <span class="ltr">{{ store.id or "—" }}</span></div>
+  </article>
+
+  <article class="stat">
+    <div class="stat__top">
+      <span class="stat__icon stat__icon--info" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+      </span>
+      <span class="stat__label">البريد الإلكتروني</span>
+    </div>
+    <div class="stat__value truncate" style="font-size: 16px" title="{{ user.email }}">{{ user.email or "—" }}</div>
+    <div class="stat__hint"><span class="ltr">{{ user.mobile or "لا يوجد رقم جوال" }}</span></div>
+  </article>
+
+  <article class="stat">
+    <div class="stat__top">
+      <span class="stat__icon stat__icon--success" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </span>
+      <span class="stat__label">حالة الاشتراك</span>
+    </div>
+    <div class="stat__value" style="font-size: 20px">{{ store.plan or "نشِط" }}</div>
+    <div class="stat__hint">{{ store.status or "التطبيق مثبّت على متجرك" }}</div>
+  </article>
+
+  <article class="stat">
+    <div class="stat__top">
+      <span class="stat__icon stat__icon--warning" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      </span>
+      <span class="stat__label">صلاحية الاتصال</span>
+    </div>
+    <div class="stat__value" style="font-size: 20px">تلقائية</div>
+    <div class="stat__hint"><a href="/refreshToken">تجديد التوكن يدوياً</a></div>
+  </article>
+</section>
+
+{% if store %}
+<section class="card">
+  <div class="card__head">
+    <h2>بيانات المتجر</h2>
+    <span class="spacer"></span>
+    <span class="badge badge--plain">من واجهة سلة البرمجية</span>
+  </div>
+  <div class="card__body">
+    {% set labels = {
+      "id": "معرّف المتجر",
+      "username": "الاسم المختصر",
+      "name": "اسم المتجر",
+      "email": "بريد المتجر",
+      "mobile": "جوال المتجر",
+      "domain": "رابط المتجر",
+      "plan": "الباقة",
+      "status": "الحالة",
+      "created_at": "تاريخ الإنشاء",
+      "commercial_number": "السجل التجاري",
+      "tax_number": "الرقم الضريبي",
+      "licenses": "التراخيص",
+      "store_location": "موقع المتجر"
+    } %}
+    <dl class="data-list">
+      {% for key, value in store %}
+        {% if key != "avatar" and value and (value is string or value is number) %}
+        <div class="data-list__row">
+          <dt>{{ labels[key] or key }}</dt>
+          <dd>
+            {% if key == "domain" %}
+              <a href="{{ value }}" target="_blank" rel="noopener">{{ value }}</a>
+            {% else %}
+              {{ value }}
+            {% endif %}
+          </dd>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </dl>
+  </div>
+</section>
+{% endif %}
+
+{% endif %}
+{% endblock %}

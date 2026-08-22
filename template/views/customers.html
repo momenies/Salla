@@ -1,17 +1,86 @@
-{% extends 'layout.html' %} {% block content %}
+{% extends "layout.html" %}
+{% block content %}
 
-<div>
-  <div>Customers:</div>
-
-  {% for customer in customers %}
+{% if error %}
+<div class="alert alert--danger">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
   <div>
-    Name :
-    <span style="font-weight: bold"
-      >{{customer.first_name}} {{customer.last_name}}</span
-    >
+    <strong>تعذّر جلب العملاء من سلة</strong>
+    <p>{{ error }}</p>
   </div>
-  <div>Mobile : <span style="font-weight: bold">{{customer.mobile}}</span></div>
-  <div>Email : <span style="font-weight: bold">{{customer.email}}</span></div>
-  {% endfor %}
 </div>
+{% endif %}
+
+<section class="card">
+  <div class="card__head">
+    <h2>العملاء</h2>
+    <span class="spacer"></span>
+    <span class="badge badge--plain">{{ customers | length }} عميل</span>
+  </div>
+
+  {% if customers and customers | length %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>العميل</th>
+          <th>الجوال</th>
+          <th>البريد الإلكتروني</th>
+          <th>المدينة</th>
+          <th>تاريخ التسجيل</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for customer in customers %}
+        <tr>
+          <td>
+            <div class="identity">
+              {% if customer.avatar %}
+              <img class="avatar avatar--sm" src="{{ customer.avatar }}" alt="" loading="lazy">
+              {% else %}
+              <span class="avatar avatar--sm" aria-hidden="true">{{ customer.first_name | truncate(1, true, "") or "؟" }}</span>
+              {% endif %}
+              <span class="identity__meta">
+                <strong>{{ customer.first_name }} {{ customer.last_name }}</strong>
+                <span class="ltr">#{{ customer.id }}</span>
+              </span>
+            </div>
+          </td>
+
+          <td>
+            {% if customer.mobile %}
+            <a href="tel:{{ customer.mobile }}" class="mono">{{ customer.mobile }}</a>
+            {% else %}
+            <span class="subtle">—</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if customer.email %}
+            <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>
+            {% else %}
+            <span class="subtle">—</span>
+            {% endif %}
+          </td>
+
+          <td>{{ customer.city or "—" }}</td>
+
+          <td class="small muted ltr">{{ customer.updated_at.date | truncate(10, true, "") or "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="empty">
+    <span class="empty__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+    </span>
+    <h3>لا يوجد عملاء بعد</h3>
+    <p>سيظهر هنا كل عميل يسجّل في متجرك، مع بيانات التواصل الخاصة به.</p>
+  </div>
+  {% endif %}
+</section>
+
 {% endblock %}

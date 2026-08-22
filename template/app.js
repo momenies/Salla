@@ -101,6 +101,9 @@ var app = express();
 app.set("views", __dirname + "/views");
 app.set("view engine", "html");
 
+// اسم التطبيق يظهر في كل الصفحات — غيّره من ملف .env عبر APP_NAME
+app.locals.appName = process.env.APP_NAME || "تطبيق سلة";
+
 // set the session secret
 // you can store session data in any database (monogdb - mysql - inmemory - etc) for more (https://www.npmjs.com/package/express-session)
 app.use(
@@ -158,8 +161,11 @@ app.get(
 app.get("/", async function (req, res) {
   let userDetails = {
     user: req.user,
-    isLogin: req.user
-  }
+    isLogin: req.user,
+    page: "home",
+    pageTitle: req.user ? "الرئيسية" : "مرحباً بك",
+    pageSubtitle: "نظرة عامة على متجرك",
+  };
   if (req.user) {
     try {
       const userFromDB = await SallaDatabase.retrieveUser({ email: req.user.email }, true);
@@ -183,6 +189,9 @@ app.get("/account", ensureAuthenticated, function (req, res) {
   res.render("account.html", {
     user: req.user,
     isLogin: req.user,
+    page: "account",
+    pageTitle: "بيانات الحساب",
+    pageSubtitle: "معلوماتك ومعلومات متجرك على سلة",
   });
 });
 
@@ -194,19 +203,47 @@ app.get("/refreshToken", ensureAuthenticated, function (req, res) {
     .then((token) => {
       res.render("token.html", {
         token,
+        user: req.user,
         isLogin: req.user,
+        page: "token",
+        pageTitle: "تجديد التوكن",
+        pageSubtitle: "مفاتيح الاتصال بين التطبيق ومتجرك",
       });
     })
-    .catch((err) => res.send(err));
+    .catch((err) => {
+      console.log("Error refreshing token: ", err.message || err);
+      res.status(502).render("error.html", {
+        user: req.user,
+        isLogin: req.user,
+        page: "token",
+        pageTitle: "تعذّر تجديد التوكن",
+        pageSubtitle: "حدث خطأ أثناء الاتصال بسلة",
+        error: err.message || "خطأ غير معروف",
+      });
+    });
 });
 
 // GET /orders
 // get all orders from user store
 
 app.get("/orders", ensureAuthenticated, async function (req, res) {
+  let orders = [];
+  let error = null;
+  try {
+    orders = (await SallaAPI.getAllOrders()) || [];
+  } catch (err) {
+    console.log("Error loading orders: ", err.message || err);
+    error = err.message || "تعذّر الاتصال بواجهة سلة البرمجية.";
+  }
   res.render("orders.html", {
-    orders: await SallaAPI.getAllOrders(),
+    orders,
+    error,
+    stats: summarizeOrders(orders),
+    user: req.user,
     isLogin: req.user,
+    page: "orders",
+    pageTitle: "الطلبات",
+    pageSubtitle: "كل طلبات متجرك في مكان واحد",
   });
 });
 
@@ -214,19 +251,57 @@ app.get("/orders", ensureAuthenticated, async function (req, res) {
 // get all customers from user store
 
 app.get("/customers", ensureAuthenticated, async function (req, res) {
+  let customers = [];
+  let error = null;
+  try {
+    customers = (await SallaAPI.getAllCustomers()) || [];
+  } catch (err) {
+    console.log("Error loading customers: ", err.message || err);
+    error = err.message || "تعذّر الاتصال بواجهة سلة البرمجية.";
+  }
   res.render("customers.html", {
-    customers: await SallaAPI.getAllCustomers(),
+    customers,
+    error,
+    user: req.user,
     isLogin: req.user,
+    page: "customers",
+    pageTitle: "العملاء",
+    pageSubtitle: "قائمة عملاء متجرك وبيانات التواصل معهم",
   });
 });
 
 // GET /logout
 //   logout from passport
-app.get("/logout", function (req, res) {
+app.get("/logout", function (req, res, next) {
   SallaAPI.logout();
   req.logout(function (err) {
     if (err) { return next(err); }
     res.redirect("/");
+  });
+});
+
+// 404 - صفحة غير موجودة
+app.use(function (req, res) {
+  res.status(404).render("error.html", {
+    user: req.user,
+    isLogin: req.user,
+    pageTitle: "الصفحة غير موجودة",
+    pageSubtitle: "الرابط الذي فتحته غير صحيح",
+    code: "404",
+    message: "لم نعثر على الصفحة التي تبحث عنها.",
+  });
+});
+
+// معالج الأخطاء العام — يمنع توقف التطبيق ويعرض صفحة مرتبة
+app.use(function (err, req, res, next) {
+  console.error("Unhandled error: ", err);
+  res.status(500).render("error.html", {
+    user: req.user,
+    isLogin: req.user,
+    pageTitle: "حدث خطأ",
+    pageSubtitle: "نعتذر، حصل خلل غير متوقع",
+    code: "500",
+    message: "حدث خطأ غير متوقع في التطبيق. حاول مرة أخرى بعد قليل.",
   });
 });
 
@@ -245,4 +320,22 @@ function ensureAuthenticated(req, res, next) {
     return next();
   }
   res.redirect("/login");
+}
+
+// يحسب ملخّصاً بسيطاً للطلبات لعرضه في بطاقات الإحصاءات
+function summarizeOrders(orders) {
+  const list = Array.isArray(orders) ? orders : [];
+  const total = list.reduce(function (sum, order) {
+    const amount = Number(order?.total?.amount);
+    return sum + (Number.isFinite(amount) ? amount : 0);
+  }, 0);
+  const currency = list.find((order) => order?.total?.currency)?.total?.currency || "";
+  const round = (value) => Math.round(value * 100) / 100;
+
+  return {
+    count: list.length,
+    total: round(total),
+    average: list.length ? round(total / list.length) : 0,
+    currency,
+  };
 }

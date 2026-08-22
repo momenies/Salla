@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<section class="card">
+  <div class="empty">
+    <span class="empty__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5"/><path d="M12 16h.01"/></svg>
+    </span>
+    {% if code %}<span class="badge badge--plain">{{ code }}</span>{% endif %}
+    <h3>{{ pageTitle }}</h3>
+    <p>{{ message or error or "حدث خطأ غير متوقع." }}</p>
+    <div class="row" style="justify-content: center; margin-top: 8px">
+      <a class="btn btn--primary btn--sm" href="/">العودة للرئيسية</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

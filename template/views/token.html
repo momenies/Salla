@@ -1,14 +1,62 @@
-{% extends 'layout.html' %} {% block content %}
+{% extends "layout.html" %}
+{% block content %}
 
-<div>
-  <div>Token:</div>
+<div class="alert">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 3 7v6c0 5 3.8 8.4 9 9 5.2-.6 9-4 9-9V7Z"/><path d="M12 9v4"/><path d="M12 16h.01"/></svg>
   <div>
-    New Access Token Token:
-    <span style="font-weight: bold">{{token.accessToken}}</span>
-  </div>
-  <div>
-    New Refresh Token :
-    <span style="font-weight: bold">{{token.newRefreshToken}}</span>
+    <strong>لا تشارك هذه المفاتيح مع أي شخص</strong>
+    <p>مَن يملك هذه المفاتيح يستطيع الوصول إلى بيانات متجرك. تعامل معها كما تتعامل مع كلمة المرور.</p>
   </div>
 </div>
+
+<section class="card">
+  <div class="card__head">
+    <h2>تم تجديد مفاتيح الاتصال</h2>
+    <span class="spacer"></span>
+    <span class="badge badge--success">ناجح</span>
+  </div>
+
+  <div class="card__body stack">
+
+    <div class="stack" style="gap: 8px">
+      <div class="row">
+        <strong class="small">مفتاح الوصول (Access Token)</strong>
+        <span class="spacer"></span>
+        <button class="btn btn--quiet btn--sm" type="button" data-reveal="#access-token">إظهار</button>
+        <button class="btn btn--ghost btn--sm" type="button" data-copy="#access-token">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          نسخ
+        </button>
+      </div>
+      <div class="code-block">
+        <code id="access-token" class="is-masked">{{ token.accessToken or "—" }}</code>
+      </div>
+    </div>
+
+    <div class="stack" style="gap: 8px">
+      <div class="row">
+        <strong class="small">مفتاح التجديد (Refresh Token)</strong>
+        <span class="spacer"></span>
+        <button class="btn btn--quiet btn--sm" type="button" data-reveal="#refresh-token">إظهار</button>
+        <button class="btn btn--ghost btn--sm" type="button" data-copy="#refresh-token">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          نسخ
+        </button>
+      </div>
+      <div class="code-block">
+        <code id="refresh-token" class="is-masked">{{ token.newRefreshToken or "—" }}</code>
+      </div>
+    </div>
+
+    <div class="row">
+      <a class="btn btn--ghost btn--sm" href="/refreshToken">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg>
+        تجديد مرة أخرى
+      </a>
+      <a class="btn btn--quiet btn--sm" href="/">العودة للرئيسية</a>
+    </div>
+
+  </div>
+</section>
+
 {% endblock %}
