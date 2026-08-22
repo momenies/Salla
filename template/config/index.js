@@ -52,6 +52,30 @@ const config = {
   // تسجيل كل طلب في اللوج (يُطفأ تلقائياً في الإنتاج ما لم يُطلب)
   requestLog: bool(env.REQUEST_LOG, nodeEnv !== "production"),
 
+  automation: {
+    enabled: bool(env.AUTOMATION_ENABLED, true),
+    // كل كم ثانية يفحص التطبيق صندوق الصادر
+    dispatchIntervalSec: int(env.AUTOMATION_DISPATCH_INTERVAL_SEC, 30),
+    // عدد الرسائل في كل دورة، وحد إعادة المحاولة
+    batchSize: int(env.AUTOMATION_BATCH_SIZE, 20),
+    maxAttempts: int(env.AUTOMATION_MAX_ATTEMPTS, 4),
+    timeoutMs: int(env.AUTOMATION_TIMEOUT_MS, 15000),
+    defaultCountryCode: env.DEFAULT_COUNTRY_CODE || "966",
+    // توكن يحمي /tasks/dispatch حتى يستدعيه Cloud Scheduler بأمان
+    dispatchToken: env.AUTOMATION_DISPATCH_TOKEN || "",
+
+    webhookUrl: env.AUTOMATION_WEBHOOK_URL || "",
+    webhookSecret: env.AUTOMATION_WEBHOOK_SECRET || "",
+
+    whatsapp: {
+      token: env.WHATSAPP_TOKEN || "",
+      phoneNumberId: env.WHATSAPP_PHONE_NUMBER_ID || "",
+      apiVersion: env.WHATSAPP_API_VERSION || "v21.0",
+      templateName: env.WHATSAPP_TEMPLATE_NAME || "",
+      templateLanguage: env.WHATSAPP_TEMPLATE_LANGUAGE || "ar",
+    },
+  },
+
   // ضبط عام لواجهة المستخدم
   ui: {
     perPage: int(env.UI_PER_PAGE, 15),
@@ -75,6 +99,16 @@ function inspect() {
 
   if (!config.salla.webhookSecret) warnings.push("SALLA_WEBHOOK_SECRET غير مضبوط — أحداث المتجر (Webhooks) لن تُستقبل.");
   if (!config.salla.appId) warnings.push("SALLA_APP_ID غير مضبوط — بعض روابط بوابة الشركاء لن تعمل.");
+  if (config.automation.enabled) {
+    const { whatsapp, webhookUrl } = config.automation;
+    const anyChannel = (whatsapp.token && whatsapp.phoneNumberId) || webhookUrl;
+    if (!anyChannel) {
+      warnings.push("لا توجد قناة إرسال مهيّأة — الأتمتة ستعمل بوضع التجربة فقط (تسجّل الرسائل ولا ترسلها).");
+    }
+    if (config.isProduction && !config.automation.dispatchToken) {
+      warnings.push("AUTOMATION_DISPATCH_TOKEN غير مضبوط — مسار /tasks/dispatch سيبقى مغلقاً.");
+    }
+  }
   if (config.isProduction && config.session.secret === "salla-app-dev-secret-change-me") {
     errors.push("SESSION_SECRET ما زال القيمة الافتراضية — اضبط قيمة عشوائية طويلة قبل النشر.");
   }

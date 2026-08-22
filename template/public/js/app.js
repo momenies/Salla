@@ -201,4 +201,117 @@
       window.open(url, "_blank", "noopener");
     });
   });
+
+  /* ---------- تأكيد قبل الإجراءات المدمّرة ---------- */
+  document.querySelectorAll("form[data-confirm]").forEach(function (form) {
+    form.addEventListener("submit", function (e) {
+      if (!window.confirm(form.getAttribute("data-confirm"))) e.preventDefault();
+    });
+  });
+
+  /* ---------- محرّر قواعد الأتمتة ---------- */
+  var ruleForm = document.querySelector("[data-automation-form]");
+  if (ruleForm) {
+    var parse = function (attr) {
+      try { return JSON.parse(ruleForm.getAttribute(attr) || "{}"); } catch (e) { return {}; }
+    };
+    var variablesByEvent = parse("data-variables");
+    var samplesByEvent = parse("data-samples");
+
+    var eventSelect = ruleForm.querySelector("[data-event-select]");
+    var templateBox = ruleForm.querySelector("#template");
+    var chipsRow = ruleForm.querySelector("[data-variable-chips]");
+    var preview = ruleForm.querySelector("[data-template-preview]");
+    var conditionField = ruleForm.querySelector("[data-condition-field]");
+    var currentCondition = (ruleForm.querySelector("[data-current-condition]") || {}).value || "";
+
+    // قيم تجريبية للمعاينة فقط
+    var SAMPLE_VALUES = {
+      customer_name: "سارة العتيبي", store_name: "متجر النخبة", store_domain: "https://store.salla.sa",
+      order_id: "40001", order_total: "350", order_currency: "ر.س", order_status: "تم التنفيذ",
+      items_count: "2", items_list: "2× قميص قطن، 1× حزام جلد", payment_method: "mada",
+      tracking_number: "SP123456789", shipping_company: "سمسا",
+      cart_total: "210", cart_currency: "ر.س", cart_url: "https://store.salla.sa/cart",
+      customer_city: "الرياض", product_name: "عطر شرقي 100مل", product_sku: "SKU-104",
+      quantity: "2", date: "٢٢ أغسطس ٢٠٢٦", event: "order.created",
+    };
+
+    var insertAtCursor = function (text) {
+      if (!templateBox) return;
+      var start = templateBox.selectionStart || 0;
+      var end = templateBox.selectionEnd || 0;
+      var value = templateBox.value;
+      templateBox.value = value.slice(0, start) + text + value.slice(end);
+      var pos = start + text.length;
+      templateBox.focus();
+      templateBox.setSelectionRange(pos, pos);
+      renderPreview();
+    };
+
+    var renderPreview = function () {
+      if (!preview || !templateBox) return;
+      var text = templateBox.value.replace(/\{\s*([a-zA-Z0-9_]+)\s*\}/g, function (m, name) {
+        return Object.prototype.hasOwnProperty.call(SAMPLE_VALUES, name) ? SAMPLE_VALUES[name] : "";
+      });
+      preview.textContent = text.trim() || "—";
+    };
+
+    var currentVariables = function () {
+      var id = eventSelect ? eventSelect.value : "";
+      return variablesByEvent[id] || [];
+    };
+
+    var renderChips = function () {
+      if (!chipsRow) return;
+      chipsRow.querySelectorAll("[data-var-chip]").forEach(function (el) { el.remove(); });
+      currentVariables().forEach(function (name) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "chip chip--action";
+        btn.setAttribute("data-var-chip", "");
+        btn.textContent = "{" + name + "}";
+        btn.addEventListener("click", function () { insertAtCursor("{" + name + "}"); });
+        chipsRow.appendChild(btn);
+      });
+    };
+
+    var renderConditionOptions = function () {
+      if (!conditionField) return;
+      var keep = conditionField.value || currentCondition;
+      conditionField.innerHTML = "";
+      var none = document.createElement("option");
+      none.value = "";
+      none.textContent = "— بلا شرط —";
+      conditionField.appendChild(none);
+      currentVariables().forEach(function (name) {
+        var opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        if (name === keep) opt.selected = true;
+        conditionField.appendChild(opt);
+      });
+    };
+
+    var onEventChange = function () {
+      renderChips();
+      renderConditionOptions();
+      renderPreview();
+    };
+
+    if (eventSelect) eventSelect.addEventListener("change", onEventChange);
+    if (templateBox) templateBox.addEventListener("input", renderPreview);
+
+    var sampleBtn = ruleForm.querySelector("[data-use-sample]");
+    if (sampleBtn) {
+      sampleBtn.addEventListener("click", function () {
+        var id = eventSelect ? eventSelect.value : "";
+        if (templateBox && samplesByEvent[id]) {
+          templateBox.value = samplesByEvent[id];
+          renderPreview();
+        }
+      });
+    }
+
+    onEventChange();
+  }
 })();

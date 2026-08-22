@@ -43,6 +43,7 @@ router.post("/webhook", async (req, res) => {
   }
 
   const stores = db.stores();
+  const automation = db.automation();
   let record = null;
 
   try {
@@ -57,6 +58,16 @@ router.post("/webhook", async (req, res) => {
       // أحداث التطبيق تغيّر حالة التثبيت والاشتراك
       if (eventName.startsWith("app.")) {
         await stores.applyAppEvent(eventName, body);
+      }
+    }
+
+    // قواعد الأتمتة: تُدرج الرسائل في صندوق الصادر ولا ترسلها الآن،
+    // حتى يبقى ردّنا على سلة سريعاً.
+    if (automation) {
+      const store = stores ? await stores.findByMerchantId(body.merchant) : null;
+      const outcomes = await automation.handleEvent(body, store);
+      if (outcomes.length) {
+        console.log(`automation: ${eventName} → ${outcomes.map((o) => o.status).join(", ")}`);
       }
     }
 

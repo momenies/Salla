@@ -121,6 +121,11 @@ async function start() {
   reportConfig();
 
   const app = await createApp();
+
+  // عامل الأتمتة يبدأ مع الخادم فقط (لا داخل createApp حتى لا يعمل في الاختبارات)
+  const automation = db.automation();
+  if (automation) automation.startWorker();
+
   const server = app.listen(config.port, () => {
     console.log(`🚀 ${config.appName} يعمل على http://localhost:${config.port}`);
   });

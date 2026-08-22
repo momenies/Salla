@@ -1,0 +1,124 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<a class="back-link" href="/automation">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+  رجوع إلى الأتمتة
+</a>
+
+{% if errors and errors | length %}
+<div class="alert alert--danger">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+  <div>
+    <strong>راجع الحقول التالية</strong>
+    {% for e in errors %}<p>{{ e }}</p>{% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<form method="post" action="{% if rule and rule.id %}/automation/{{ rule.id }}/edit{% else %}/automation/new{% endif %}"
+      class="stack" data-automation-form
+      data-variables='{{ variablesByEvent | dump }}'
+      data-samples='{{ samplesByEvent | dump }}'>
+
+  <section class="card">
+    <div class="card__head"><h2>١. متى تعمل القاعدة؟</h2></div>
+    <div class="card__body stack">
+      <div class="field-block">
+        <label for="name">اسم القاعدة</label>
+        <div class="field"><input id="name" name="name" type="text" value="{{ rule.name }}" placeholder="مثال: تأكيد الطلب للعميل" required></div>
+        <p class="field-hint">اسم داخلي لك فقط، لتميّز القواعد عن بعضها.</p>
+      </div>
+
+      <div class="field-block">
+        <label for="event">الحدث</label>
+        <div class="field">
+          <select id="event" name="event" data-event-select>
+            {% for t in triggers %}
+            <option value="{{ t.id }}" {% if selectedEvent == t.id %}selected{% endif %}>{{ t.label }} — {{ t.hint }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="field-block">
+        <label for="delay_minutes">التأخير قبل الإرسال (بالدقائق)</label>
+        <div class="field"><input id="delay_minutes" name="delay_minutes" type="number" min="0" max="10080" value="{{ rule.delay_minutes | default(0) }}"></div>
+        <p class="field-hint">صفر = فوراً. للسلة المتروكة جرّب ٦٠ دقيقة مثلاً.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2>٢. عبر أي قناة؟</h2></div>
+    <div class="card__body stack">
+      <div class="field-block">
+        <label for="channel">القناة</label>
+        <div class="field">
+          <select id="channel" name="channel">
+            {% for c in channels %}
+            <option value="{{ c.id }}" {% if selectedChannel == c.id %}selected{% endif %}>
+              {{ c.label }}{% if not c.configured %} (تحتاج إعداد){% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <p class="field-hint">ابدأ بـ«تجربة فقط» لتتأكّد من النص، ثم بدّلها لقناة حقيقية.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2>٣. نص الرسالة</h2></div>
+    <div class="card__body stack">
+      <div class="field-block">
+        <label for="template">الرسالة</label>
+        <div class="field"><textarea id="template" name="template" rows="5" required>{{ rule.template }}</textarea></div>
+        <p class="field-hint">اضغط أي متغيّر أدناه لإضافته في مكان المؤشّر.</p>
+      </div>
+
+      <div class="row" data-variable-chips>
+        <span class="small muted">المتغيّرات المتاحة:</span>
+      </div>
+
+      <div class="row">
+        <button class="btn btn--quiet btn--sm" type="button" data-use-sample>استخدم النص الجاهز لهذا الحدث</button>
+      </div>
+
+      <div class="preview-box">
+        <span class="tiny subtle">معاينة بقيم تجريبية</span>
+        <p data-template-preview>—</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2>٤. شرط اختياري</h2></div>
+    <div class="card__body stack">
+      <p class="muted small">اتركه فارغاً لترسل عند كل مرة. أو أرسل فقط عندما يساوي متغيّر معيّن قيمة معيّنة.</p>
+      <div class="row" style="align-items: flex-end; gap: 10px">
+        <div class="field-block" style="flex: 1 1 200px">
+          <label for="condition_field">المتغيّر</label>
+          <div class="field">
+            <select id="condition_field" name="condition_field" data-condition-field>
+              <option value="">— بلا شرط —</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-block" style="flex: 1 1 200px">
+          <label for="condition_equals">يساوي</label>
+          <div class="field"><input id="condition_equals" name="condition_equals" type="text" value="{{ conditions.equals }}" placeholder="مثال: تم التنفيذ"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="row">
+    <button class="btn btn--primary" type="submit">{% if rule and rule.id %}حفظ التعديلات{% else %}إنشاء القاعدة{% endif %}</button>
+    <a class="btn btn--quiet" href="/automation">إلغاء</a>
+  </div>
+
+  <input type="hidden" data-current-condition value="{{ conditions.field }}">
+</form>
+
+{% endblock %}

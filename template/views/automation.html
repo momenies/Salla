@@ -1,0 +1,145 @@
+{% extends "layout.html" %}
+{% block content %}
+
+{% if saved %}<div class="alert alert--success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><strong>تم حفظ القاعدة ✓</strong></div></div>{% endif %}
+{% if deleted %}<div class="alert alert--info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg><div><strong>تم حذف القاعدة</strong></div></div>{% endif %}
+
+{% if not enabled %}
+<div class="alert">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+  <div><strong>الأتمتة معطّلة</strong><p>اضبط <span class="mono">AUTOMATION_ENABLED=true</span> في ملف <span class="mono">.env</span> لتشغيلها.</p></div>
+</div>
+{% endif %}
+
+<section class="grid grid--stats">
+  <article class="stat">
+    <div class="stat__top">
+      <span class="stat__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m13 2-9 12h7l-1 8 9-12h-7Z"/></svg></span>
+      <span class="stat__label">قواعد مفعّلة</span>
+    </div>
+    <div class="stat__value">{{ rules | selectattr("enabled") | list | length }}<span class="small muted"> من {{ rules | length }}</span></div>
+    <div class="stat__hint">تعمل تلقائياً عند وقوع الحدث</div>
+  </article>
+
+  <article class="stat">
+    <div class="stat__top">
+      <span class="stat__icon stat__icon--success" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="stat__label">رسائل أُرسلت</span>
+    </div>
+    <div class="stat__value">{{ counts.sent | default(0) | number }}</div>
+    <div class="stat__hint"><a href="/automation/outbox?status=sent">عرضها</a></div>
+  </article>
+
+  <article class="stat">
+    <div class="stat__top">
+      <span class="stat__icon stat__icon--warning" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+      <span class="stat__label">في الانتظار</span>
+    </div>
+    <div class="stat__value">{{ counts.pending | default(0) | number }}</div>
+    <div class="stat__hint"><a href="/automation/outbox?status=pending">عرضها</a></div>
+  </article>
+
+  <article class="stat">
+    <div class="stat__top">
+      <span class="stat__icon" style="background: var(--danger-soft); color: var(--danger)" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>
+      <span class="stat__label">فشلت</span>
+    </div>
+    <div class="stat__value">{{ counts.failed | default(0) | number }}</div>
+    <div class="stat__hint"><a href="/automation/outbox?status=failed">عرضها ومعالجتها</a></div>
+  </article>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2>قواعد الأتمتة</h2>
+    <span class="spacer"></span>
+    <a class="btn btn--ghost btn--sm" href="/automation/outbox">صندوق الصادر</a>
+    <a class="btn btn--primary btn--sm" href="/automation/new">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      قاعدة جديدة
+    </a>
+  </div>
+
+  {% if rules and rules | length %}
+  <ul class="rule-list">
+    {% for rule in rules %}
+    <li class="rule {% if not rule.enabled %}is-off{% endif %}">
+      <div class="rule__main">
+        <div class="row" style="gap:8px">
+          <strong>{{ rule.name }}</strong>
+          {% if rule.enabled %}
+            <span class="badge badge--success">مفعّلة</span>
+          {% else %}
+            <span class="badge">موقوفة</span>
+          {% endif %}
+        </div>
+
+        <div class="rule__flow">
+          <span class="chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7Z"/></svg>
+            {% for t in triggers %}{% if t.id == rule.event %}{{ t.label }}{% endif %}{% endfor %}
+          </span>
+          <span class="rule__arrow" aria-hidden="true">←</span>
+          {% if rule.delay_minutes %}
+          <span class="chip">بعد {{ rule.delay_minutes }} دقيقة</span>
+          <span class="rule__arrow" aria-hidden="true">←</span>
+          {% endif %}
+          <span class="chip">
+            {% for c in channels %}{% if c.id == rule.channel %}{{ c.label }}{% if not c.configured %} <span class="chip__warn">غير مهيّأة</span>{% endif %}{% endif %}{% endfor %}
+          </span>
+        </div>
+
+        <p class="rule__preview">{{ rule.template | shorten(140) }}</p>
+
+        <p class="tiny subtle">
+          {% if rule.run_count %}عملت {{ rule.run_count }} مرة · آخر مرة {{ rule.last_run_at | fromNow }}{% else %}لم تعمل بعد{% endif %}
+        </p>
+      </div>
+
+      <div class="rule__actions">
+        <form method="post" action="/automation/{{ rule.id }}/test"><button class="btn btn--quiet btn--sm" type="submit">تجربة</button></form>
+        <a class="btn btn--ghost btn--sm" href="/automation/{{ rule.id }}/edit">تعديل</a>
+        <form method="post" action="/automation/{{ rule.id }}/toggle">
+          <button class="btn btn--quiet btn--sm" type="submit">{{ "إيقاف" if rule.enabled else "تفعيل" }}</button>
+        </form>
+        <form method="post" action="/automation/{{ rule.id }}/delete" data-confirm="حذف القاعدة «{{ rule.name }}»؟">
+          <button class="btn btn--danger btn--sm" type="submit">حذف</button>
+        </form>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+
+  {% else %}
+  <div class="empty">
+    <span class="empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m13 2-9 12h7l-1 8 9-12h-7Z"/></svg></span>
+    <h3>لا توجد قواعد بعد</h3>
+    <p>ابدأ بقاعدة واحدة: رسالة ترحيب لكل طلب جديد مثلاً. تقدر تجرّبها بوضع «تجربة فقط» قبل ربط قناة حقيقية.</p>
+    <a class="btn btn--primary btn--sm" href="/automation/new">إنشاء أول قاعدة</a>
+  </div>
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="card__head"><h2>قنوات الإرسال</h2></div>
+  <ul class="checklist">
+    {% for c in channels %}
+    <li class="checklist__item checklist__item--{{ "ok" if c.configured else "warn" }}">
+      <span class="checklist__mark" aria-hidden="true">
+        {% if c.configured %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        {% else %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        {% endif %}
+      </span>
+      <span class="checklist__body">
+        <strong>{{ c.label }}</strong>
+        <span class="muted small">{{ c.hint }}{% if not c.configured and c.setupHint %} — {{ c.setupHint }}{% endif %}</span>
+      </span>
+      <span class="checklist__tag">{{ "جاهزة" if c.configured else "تحتاج إعداد" }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+{% endblock %}

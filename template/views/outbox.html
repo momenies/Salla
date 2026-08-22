@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<a class="back-link" href="/automation">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+  رجوع إلى الأتمتة
+</a>
+
+{% if tested %}
+<div class="alert alert--success">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+  <div><strong>تمت التجربة</strong><p>الرسالة التجريبية في أعلى القائمة — راجع حالتها ونصّها.</p></div>
+</div>
+{% endif %}
+
+<section class="card">
+  <div class="card__head">
+    <h2>صندوق الصادر</h2>
+    <span class="spacer"></span>
+    <span class="badge badge--success">{{ counts.sent | default(0) }} أُرسلت</span>
+    <span class="badge badge--warning">{{ counts.pending | default(0) }} تنتظر</span>
+    <span class="badge badge--danger">{{ counts.failed | default(0) }} فشلت</span>
+  </div>
+
+  <form class="toolbar" method="get" action="/automation/outbox">
+    <div class="field field--grow">
+      <label class="sr-only" for="status">الحالة</label>
+      <select id="status" name="status">
+        <option value="">كل الرسائل</option>
+        <option value="sent" {% if filters.status == "sent" %}selected{% endif %}>أُرسلت</option>
+        <option value="pending" {% if filters.status == "pending" %}selected{% endif %}>في الانتظار</option>
+        <option value="failed" {% if filters.status == "failed" %}selected{% endif %}>فشلت</option>
+        <option value="skipped" {% if filters.status == "skipped" %}selected{% endif %}>تُخطّيت</option>
+      </select>
+    </div>
+    <button class="btn btn--primary btn--sm" type="submit">تصفية</button>
+    {% if filters.status %}<a class="btn btn--quiet btn--sm" href="/automation/outbox">مسح</a>{% endif %}
+  </form>
+
+  {% if messages and messages | length %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>الحالة</th><th>الحدث</th><th>المستلم</th><th>الرسالة</th><th>الوقت</th><th><span class="sr-only">إجراء</span></th></tr></thead>
+      <tbody>
+        {% for m in messages %}
+        <tr>
+          <td>
+            {% if m.status == "sent" %}<span class="badge badge--success">أُرسلت</span>
+            {% elif m.status == "pending" %}<span class="badge badge--warning">تنتظر</span>
+            {% elif m.status == "skipped" %}<span class="badge">تُخطّيت</span>
+            {% else %}<span class="badge badge--danger">فشلت</span>{% endif %}
+            {% if m.attempts > 1 %}<div class="tiny subtle">{{ m.attempts }} محاولات</div>{% endif %}
+          </td>
+          <td class="mono ltr">{{ m.event }}</td>
+          <td class="mono ltr">{{ m.recipient or "—" }}</td>
+          <td class="wrap">
+            <div class="msg-body">{{ m.body or "—" }}</div>
+            {% if m.last_error %}<div class="tiny" style="color: var(--danger)">{{ m.last_error | shorten(160) }}</div>{% endif %}
+            <div class="tiny subtle">عبر {{ m.channel }}</div>
+          </td>
+          <td class="small muted">
+            {% if m.status == "sent" %}{{ m.sent_at | fromNow }}
+            {% elif m.status == "pending" %}مجدولة {{ m.scheduled_at | fromNow }}
+            {% else %}{{ m.createdAt | fromNow }}{% endif %}
+          </td>
+          <td>
+            {% if m.status == "failed" or m.status == "skipped" %}
+            <form method="post" action="/automation/outbox/{{ m.id }}/retry">
+              <button class="btn btn--quiet btn--sm" type="submit">إعادة المحاولة</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "partials/pagination.html" %}
+
+  {% else %}
+  <div class="empty">
+    <span class="empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span>
+    <h3>لا توجد رسائل بعد</h3>
+    <p>أنشئ قاعدة أتمتة واضغط «تجربة» لترى أول رسالة هنا.</p>
+    <a class="btn btn--primary btn--sm" href="/automation/new">قاعدة جديدة</a>
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}

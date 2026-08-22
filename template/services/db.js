@@ -5,9 +5,11 @@
 const config = require("../config");
 const createDatabase = require("../database");
 const createStoreService = require("./stores");
+const createAutomationService = require("./automation");
 
 let connection = null;
 let storeService = null;
+let automationService = null;
 let connecting = null;
 
 const database = createDatabase(config.database.orm);
@@ -22,6 +24,7 @@ async function init() {
         if (!conn) throw new Error("تعذّر الاتصال بقاعدة البيانات.");
         connection = conn;
         storeService = createStoreService(conn);
+        automationService = createAutomationService(conn);
         return conn;
       })
       .finally(() => {
@@ -39,6 +42,10 @@ function stores() {
   return storeService;
 }
 
+function automation() {
+  return automationService;
+}
+
 /** يُستخدم في فحص السلامة و/healthz */
 async function ping() {
   if (!connection) return false;
@@ -53,9 +60,11 @@ async function ping() {
 async function close() {
   if (connection && typeof connection.close === "function") {
     await connection.close();
+    if (automationService) automationService.stopWorker();
     connection = null;
     storeService = null;
+    automationService = null;
   }
 }
 
-module.exports = { init, getConnection, stores, ping, close, database };
+module.exports = { init, getConnection, stores, automation, ping, close, database };

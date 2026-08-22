@@ -5,6 +5,8 @@ const PasswordResets = require("./models/passwordresets");
 const User = require("./models/user");
 const Store = require("./models/store");
 const AppEvent = require("./models/appevent");
+const AutomationRule = require("./models/automationrule");
+const OutboxMessage = require("./models/outboxmessage");
 
 // We export the sequelize connection instance to be used around our app.
 module.exports = {
@@ -35,6 +37,8 @@ module.exports = {
       User,
       Store,
       AppEvent,
+      AutomationRule,
+      OutboxMessage,
       // Add more models here...
       // require('./models/item'),
     ];
