@@ -8,7 +8,7 @@ const getUnixTimestamp = require("./helpers/getUnixTimestamp");
 const bodyParser = require("body-parser");
 const wa = require("./helpers/wa");
 const wweb = require("./helpers/wa-wweb");
-const port = process.argv[2] || 8082;
+const port = process.env.PORT || process.argv[2] || 8082;
 
 /*
   Create a .env file in the root directory of your project. 
