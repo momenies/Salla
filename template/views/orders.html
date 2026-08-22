@@ -1,73 +1,42 @@
 {% extends "layout.html" %}
 {% block content %}
 
-{% if error %}
-<div class="alert alert--danger">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-  <div>
-    <strong>تعذّر جلب الطلبات من سلة</strong>
-    <p>{{ error }}</p>
-  </div>
-</div>
-{% endif %}
-
-<section class="grid grid--stats">
-  <article class="stat">
-    <div class="stat__top">
-      <span class="stat__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-      </span>
-      <span class="stat__label">عدد الطلبات</span>
-    </div>
-    <div class="stat__value">{{ stats.count or 0 }}</div>
-    <div class="stat__hint">آخر الطلبات الواردة من متجرك</div>
-  </article>
-
-  <article class="stat">
-    <div class="stat__top">
-      <span class="stat__icon stat__icon--success" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      </span>
-      <span class="stat__label">إجمالي المبالغ</span>
-    </div>
-    <div class="stat__value">{{ stats.total or 0 }} <span class="small muted">{{ stats.currency or "" }}</span></div>
-    <div class="stat__hint">مجموع قيمة الطلبات المعروضة</div>
-  </article>
-
-  <article class="stat">
-    <div class="stat__top">
-      <span class="stat__icon stat__icon--info" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>
-      </span>
-      <span class="stat__label">متوسط قيمة الطلب</span>
-    </div>
-    <div class="stat__value">{{ stats.average or 0 }} <span class="small muted">{{ stats.currency or "" }}</span></div>
-    <div class="stat__hint">الإجمالي ÷ عدد الطلبات</div>
-  </article>
-</section>
+{% include "partials/alert-error.html" %}
 
 <section class="card">
   <div class="card__head">
     <h2>الطلبات</h2>
     <span class="spacer"></span>
-    <span class="badge badge--plain">{{ orders | length }} طلب</span>
+    <a class="btn btn--ghost btn--sm" href="/tools/export/orders.csv">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg>
+      تصدير Excel
+    </a>
   </div>
 
-  {% if orders and orders | length %}
-  {% set statusClass = {
-    "completed": "badge--success",
-    "delivered": "badge--success",
-    "delivering": "badge--info",
-    "shipped": "badge--info",
-    "in_progress": "badge--info",
-    "under_review": "badge--warning",
-    "payment_pending": "badge--warning",
-    "restoring": "badge--warning",
-    "restored": "badge--warning",
-    "canceled": "badge--danger",
-    "cancelled": "badge--danger"
-  } %}
+  <form class="toolbar" method="get" action="/orders" role="search">
+    <div class="field field--grow">
+      <label class="sr-only" for="q">بحث في الطلبات</label>
+      <svg class="field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" name="q" type="search" value="{{ filters.q }}" placeholder="ابحث برقم الطلب أو اسم العميل…" autocomplete="off">
+    </div>
 
+    <div class="field">
+      <label class="sr-only" for="status">حالة الطلب</label>
+      <select id="status" name="status">
+        <option value="">كل الحالات</option>
+        {% for s in statuses %}
+        <option value="{{ s.slug or s.id }}" {% if filters.status == (s.slug or s.id | string) %}selected{% endif %}>{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button class="btn btn--primary btn--sm" type="submit">بحث</button>
+    {% if filters.q or filters.status %}
+    <a class="btn btn--quiet btn--sm" href="/orders">مسح</a>
+    {% endif %}
+  </form>
+
+  {% if orders and orders | length %}
   <div class="table-wrap">
     <table class="table">
       <thead>
@@ -78,59 +47,52 @@
           <th>الإجمالي</th>
           <th>الحالة</th>
           <th>التاريخ</th>
+          <th><span class="sr-only">إجراءات</span></th>
         </tr>
       </thead>
       <tbody>
         {% for order in orders %}
         <tr>
-          <td class="num">#{{ order.reference_id or order.id }}</td>
+          <td class="num"><a href="/orders/{{ order.id }}">#{{ order.reference_id or order.id }}</a></td>
 
           <td>
             {% if order.customer %}
             <div class="identity">
-              <span class="avatar avatar--sm" aria-hidden="true">{{ order.customer.first_name | truncate(1, true, "") or "؟" }}</span>
+              <span class="avatar avatar--sm" aria-hidden="true">{{ order.customer.first_name | initial }}</span>
               <span class="identity__meta">
                 <strong>{{ order.customer.first_name }} {{ order.customer.last_name }}</strong>
                 <span class="ltr">{{ order.customer.mobile or "—" }}</span>
               </span>
             </div>
-            {% else %}
-            <span class="subtle">—</span>
-            {% endif %}
+            {% else %}<span class="subtle">—</span>{% endif %}
           </td>
 
           <td class="wrap">
             {% if order.items and order.items | length %}
               {% for item in order.items %}
-              <div class="small">
-                <span class="muted">{{ item.quantity }}×</span> {{ item.name }}
-              </div>
+              <div class="small"><span class="muted">{{ item.quantity }}×</span> {{ item.name | shorten(40) }}</div>
               {% endfor %}
-            {% else %}
-            <span class="subtle">—</span>
-            {% endif %}
+            {% else %}<span class="subtle">—</span>{% endif %}
           </td>
 
-          <td class="num">{{ order.total.amount }} <span class="small muted">{{ order.total.currency }}</span></td>
-
-          <td>
-            <span class="badge {{ statusClass[order.status.slug] or '' }}">{{ order.status.name or "غير معروفة" }}</span>
-          </td>
-
-          <td class="small muted ltr">{{ order.date.date | truncate(16, true, "") or "—" }}</td>
+          <td class="num">{{ order.total.amount | money(order.total.currency) }}</td>
+          <td><span class="badge badge--{{ order.status.slug | statusTone }}">{{ order.status.name or "غير معروفة" }}</span></td>
+          <td class="small muted">{{ order.date | datetime }}</td>
+          <td><a class="btn btn--quiet btn--sm" href="/orders/{{ order.id }}">تفاصيل</a></td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 
+  {% include "partials/pagination.html" %}
+
   {% else %}
   <div class="empty">
-    <span class="empty__icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-    </span>
-    <h3>لا توجد طلبات بعد</h3>
-    <p>عندما يصل أول طلب إلى متجرك سيظهر هنا مباشرة مع تفاصيله وحالته.</p>
+    <span class="empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+    <h3>{% if filters.q or filters.status %}لا نتائج مطابقة{% else %}لا توجد طلبات بعد{% endif %}</h3>
+    <p>{% if filters.q or filters.status %}جرّب كلمة بحث أخرى أو امسح الفلاتر.{% else %}عندما يصل أول طلب إلى متجرك سيظهر هنا مباشرة.{% endif %}</p>
+    {% if filters.q or filters.status %}<a class="btn btn--ghost btn--sm" href="/orders">مسح الفلاتر</a>{% endif %}
   </div>
   {% endif %}
 </section>

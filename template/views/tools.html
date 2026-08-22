@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<section class="grid grid--cards">
+  <a class="feature feature--link" href="/tools/calculator">
+    <span class="feature__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8"/><path d="M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15v4"/></svg></span>
+    <h3>حاسبة التسعير والضريبة</h3>
+    <p>احسب سعر البيع من التكلفة وهامش الربح، وضريبة القيمة المضافة صعوداً ونزولاً.</p>
+    <span class="feature__cta">افتح الأداة ←</span>
+  </a>
+
+  <a class="feature feature--link" href="/tools/whatsapp">
+    <span class="feature__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.5L3 20.5l1.6-5.5A8.5 8.5 0 1 1 21 11.5Z"/></svg></span>
+    <h3>رسائل واتساب</h3>
+    <p>اختر عميلاً واكتب رسالتك — نجهّز لك الرابط ونفتح المحادثة مباشرة.</p>
+    <span class="feature__cta">افتح الأداة ←</span>
+  </a>
+
+  <a class="feature feature--link" href="/tools/diagnostics">
+    <span class="feature__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg></span>
+    <h3>فحص الحالة</h3>
+    <p>تشخيص سريع للإعدادات وقاعدة البيانات والتوكن والاتصال بسلة والويبهوك.</p>
+    <span class="feature__cta">افتح الأداة ←</span>
+  </a>
+</section>
+
+<section class="card">
+  <div class="card__head"><h2>تصدير البيانات</h2></div>
+  <div class="card__body stack">
+    <p class="muted">ملفات CSV مهيّأة لتفتح في Excel بالعربية دون رموز غريبة.</p>
+    <div class="row">
+      <a class="btn btn--ghost btn--sm" href="/tools/export/orders.csv">تصدير الطلبات</a>
+      <a class="btn btn--ghost btn--sm" href="/tools/export/customers.csv">تصدير العملاء</a>
+      <a class="btn btn--ghost btn--sm" href="/tools/export/products.csv">تصدير المنتجات</a>
+    </div>
+    <p class="tiny subtle">التصدير يسحب حتى ٢٠ صفحة من سلة، فقد يستغرق بضع ثوانٍ على المتاجر الكبيرة.</p>
+  </div>
+</section>
+
+{% endblock %}

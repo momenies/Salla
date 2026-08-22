@@ -607,12 +607,14 @@ table.table {
   overflow-wrap: anywhere;
 }
 
-/* أرقام وتواريخ وبريد: تُعرض من اليسار لليمين دون أن تنقلب داخل النص العربي */
+/* أرقام وتواريخ وبريد: تُعرض من اليسار لليمين دون أن تنقلب داخل النص العربي.
+   المحاذاة تتبع اتجاه الصفحة لا اتجاه العنصر، وإلا انزاحت الأرقام للطرف الخاطئ. */
 .ltr {
   direction: ltr;
   unicode-bidi: isolate;
-  text-align: start;
+  text-align: right;
 }
+html[dir="ltr"] .ltr { text-align: left; }
 
 .code-block {
   display: flex;
@@ -840,3 +842,313 @@ table.table {
   user-select: none;
   pointer-events: none;
 }
+
+/* ==========================================================================
+   9. Forms & toolbars
+   ========================================================================== */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.field--grow { flex: 1 1 240px; }
+
+.field__icon {
+  position: absolute;
+  inset-inline-start: 12px;
+  width: 17px;
+  height: 17px;
+  color: var(--text-subtle);
+  pointer-events: none;
+}
+.field:has(.field__icon) input { padding-inline-start: 38px; }
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 9px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 14.5px;
+  transition: border-color .18s var(--ease), box-shadow .18s var(--ease);
+}
+.field textarea { resize: vertical; min-height: 76px; line-height: 1.7; }
+
+.field select {
+  appearance: none;
+  padding-inline-end: 34px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(12px) calc(50% - 2px), calc(17px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.field input:hover,
+.field select:hover,
+.field textarea:hover { border-color: var(--border-strong); }
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--ring);
+}
+
+.field input::placeholder, .field textarea::placeholder { color: var(--text-subtle); }
+.field input[type="search"]::-webkit-search-cancel-button { cursor: pointer; }
+
+.field-block { display: grid; gap: 7px; }
+.field-block > label { font-size: 13.5px; font-weight: 600; }
+.field-hint { font-size: 12.5px; color: var(--text-muted); }
+
+.card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+/* ---- Switch ---- */
+.switch { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14.5px; font-weight: 500; }
+.switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.switch__track {
+  flex: none;
+  width: 42px;
+  height: 24px;
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: var(--border-strong);
+  transition: background-color .2s var(--ease);
+}
+.switch__thumb {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-xs);
+  transition: translate .2s var(--ease);
+}
+.switch input:checked + .switch__track { background: var(--primary); }
+.switch input:checked + .switch__track .switch__thumb { translate: -18px 0; }
+html[dir="ltr"] .switch input:checked + .switch__track .switch__thumb { translate: 18px 0; }
+.switch input:focus-visible + .switch__track { box-shadow: var(--ring); }
+
+/* ---- Results (calculator) ---- */
+.result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.result {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.result span { font-size: 12.5px; color: var(--text-muted); }
+.result strong { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.result--accent { background: var(--primary-soft); border-color: var(--primary-border); }
+.result--accent strong { color: var(--primary); }
+
+/* ==========================================================================
+   10. Pagination
+   ========================================================================== */
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.pager__status { font-size: 13.5px; color: var(--text-muted); margin-inline: auto; }
+.is-disabled { opacity: .45; pointer-events: none; }
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  width: fit-content;
+}
+.back-link:hover { color: var(--text); text-decoration: none; }
+.back-link svg { width: 16px; height: 16px; }
+
+/* ==========================================================================
+   11. Chart (14-day sales)
+   ========================================================================== */
+:root { --chart-1: #0d8f7c; }
+[data-theme="dark"] { --chart-1: #1ba795; }
+
+.chart { position: relative; }
+
+.chart__grid {
+  position: absolute;
+  inset: 0 0 34px 0;
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  pointer-events: none;
+}
+.chart__grid span { border-top: 1px dashed var(--border); }
+
+.chart__bars {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 210px;
+  margin: 0;
+  padding: 0 0 34px;
+  list-style: none;
+}
+
+.chart__col {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  cursor: default;
+}
+.chart__col:focus-visible { outline: none; }
+.chart__col:focus-visible .chart__bar { box-shadow: var(--ring); }
+
+.chart__bar {
+  display: block;
+  width: 100%;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--chart-1);
+  opacity: .78;
+  transition: opacity .15s var(--ease);
+}
+.chart__col.is-peak .chart__bar { opacity: 1; }
+.chart__col:hover .chart__bar,
+.chart__col:focus-visible .chart__bar { opacity: 1; }
+
+.chart__label {
+  position: absolute;
+  inset-block-end: -28px;
+  inset-inline: 0;
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--text-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chart__tip {
+  position: absolute;
+  inset-block-end: calc(100% + 8px);
+  inset-inline-start: 50%;
+  translate: 50% 4px;
+  z-index: 5;
+  padding: 7px 11px;
+  border-radius: var(--radius-sm);
+  background: var(--slate-900);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s var(--ease), translate .15s var(--ease);
+}
+[data-theme="dark"] .chart__tip { background: var(--surface-2); border: 1px solid var(--border-strong); }
+.chart__col:hover .chart__tip,
+.chart__col:focus-visible .chart__tip { opacity: 1; translate: 50% 0; }
+
+.chart__table { margin-top: 26px; }
+.chart__table summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 6px 0;
+}
+.chart__table summary:hover { color: var(--text); }
+
+/* حين تضيق الشاشة نخفي بعض تسميات المحور حتى لا تتداخل */
+@media (max-width: 720px) {
+  .chart__col:nth-child(even) .chart__label { display: none; }
+}
+
+/* ==========================================================================
+   12. Meter, checklist, feature link, thumbnails
+   ========================================================================== */
+.meter { display: grid; gap: 7px; }
+.meter__head { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
+.meter__track { height: 7px; border-radius: var(--radius-full); background: var(--surface-2); overflow: hidden; }
+.meter__fill { display: block; height: 100%; border-radius: var(--radius-full); background: var(--chart-1); }
+
+.checklist { list-style: none; margin: 0; padding: 0; }
+.checklist__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.checklist__item:last-child { border-bottom: 0; }
+.checklist__mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+.checklist__mark svg { width: 15px; height: 15px; }
+.checklist__item--ok .checklist__mark { background: var(--success-soft); color: var(--success); }
+.checklist__item--warn .checklist__mark { background: var(--warning-soft); color: var(--warning); }
+.checklist__item--error .checklist__mark { background: var(--danger-soft); color: var(--danger); }
+.checklist__body { display: grid; gap: 2px; min-width: 0; }
+.checklist__body strong { font-size: 14.5px; }
+.checklist__tag {
+  margin-inline-start: auto;
+  align-self: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-subtle);
+}
+
+.feature--link { text-decoration: none; color: inherit; }
+.feature--link:hover { text-decoration: none; }
+.feature__cta { font-size: 13.5px; font-weight: 700; color: var(--primary); }
+
+.thumb {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-xs);
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.alert--success { background: var(--success-soft); border-color: color-mix(in srgb, var(--success) 30%, transparent); }
+.alert--success svg { color: var(--success); }
+
+details > summary { cursor: pointer; }
+details .code-block { margin-top: 8px; max-height: 260px; overflow: auto; }

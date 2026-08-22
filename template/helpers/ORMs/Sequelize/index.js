@@ -3,10 +3,12 @@ const { Sequelize, DataTypes } = require("sequelize");
 const OauthTokens = require("./models/oauthtokens");
 const PasswordResets = require("./models/passwordresets");
 const User = require("./models/user");
+const Store = require("./models/store");
+const AppEvent = require("./models/appevent");
 
 // We export the sequelize connection instance to be used around our app.
 module.exports = {
-  connect: () => {
+  connect: async () => {
     // In a real app, you should keep the database connection URL as an environment variable.
     // But for this example, we will just use a local SQLite database.
     // const sequelize = new Sequelize(process.env.DB_CONNECTION_URL);
@@ -31,6 +33,8 @@ module.exports = {
       OauthTokens,
       PasswordResets,
       User,
+      Store,
+      AppEvent,
       // Add more models here...
       // require('./models/item'),
     ];
@@ -43,12 +47,8 @@ module.exports = {
 
     // We execute any associates  after the models are defined .
 
-    sequelize
-      .sync()
-      .then((data) => {})
-      .catch((err) => {
-        console.log("Error in creating and connecting database", err);
-      });
+    // ننتظر إنشاء الجداول قبل إرجاع الاتصال، وإلا قد يُستعلم عن جدول لم يُنشأ بعد
+    await sequelize.sync();
     return sequelize;
   },
 };

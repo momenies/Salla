@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<a class="back-link" href="/tools">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+  رجوع إلى الأدوات
+</a>
+
+<section class="card">
+  <div class="card__head">
+    <h2>نتيجة الفحص</h2>
+    <span class="spacer"></span>
+    {% if healthy and warnings == 0 %}
+      <span class="badge badge--success">كل شيء سليم</span>
+    {% elif healthy %}
+      <span class="badge badge--warning">{{ warnings }} تنبيه</span>
+    {% else %}
+      <span class="badge badge--danger">{{ failures }} مشكلة</span>
+    {% endif %}
+  </div>
+
+  <ul class="checklist">
+    {% for check in checks %}
+    <li class="checklist__item checklist__item--{{ check.level }}">
+      <span class="checklist__mark" aria-hidden="true">
+        {% if check.level == "ok" %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        {% elif check.level == "warn" %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        {% else %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        {% endif %}
+      </span>
+      <span class="checklist__body">
+        <strong>{{ check.name }}</strong>
+        <span class="muted small">{{ check.detail }}</span>
+      </span>
+      <span class="checklist__tag">
+        {% if check.level == "ok" %}سليم{% elif check.level == "warn" %}تنبيه{% else %}خطأ{% endif %}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <div class="card__body">
+    <div class="row">
+      <a class="btn btn--primary btn--sm" href="/tools/diagnostics">إعادة الفحص</a>
+      <a class="btn btn--ghost btn--sm" href="/events">سجل الأحداث</a>
+      <a class="btn btn--quiet btn--sm" href="/refreshToken">تجديد التوكن</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

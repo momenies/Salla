@@ -1,0 +1,38 @@
+{#
+  أزرار التنقّل بين الصفحات.
+  تتوقّع `pagination` و(اختيارياً) `filters` بمفاتيح q / status / event.
+  الفلاتر مكتوبة صراحةً لأن nunjucks لا يحتفظ بقيمة `set` خارج حلقة التكرار.
+#}
+{% if pagination and pagination.totalPages > 1 %}
+{% set qs %}{% if filters.q %}&q={{ filters.q | urlencode }}{% endif %}{% if filters.status %}&status={{ filters.status | urlencode }}{% endif %}{% if filters.event %}&event={{ filters.event | urlencode }}{% endif %}{% endset %}
+<nav class="pager" aria-label="تنقّل بين الصفحات">
+  {% if pagination.hasPrev %}
+  <a class="btn btn--ghost btn--sm" href="?page={{ pagination.prevPage }}{{ qs }}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+    السابق
+  </a>
+  {% else %}
+  <span class="btn btn--ghost btn--sm is-disabled" aria-disabled="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+    السابق
+  </span>
+  {% endif %}
+
+  <span class="pager__status">
+    صفحة <strong>{{ pagination.page }}</strong> من <strong>{{ pagination.totalPages }}</strong>
+    {% if pagination.total %}<span class="subtle">· {{ pagination.total | number }} سجل</span>{% endif %}
+  </span>
+
+  {% if pagination.hasNext %}
+  <a class="btn btn--ghost btn--sm" href="?page={{ pagination.nextPage }}{{ qs }}">
+    التالي
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>
+  </a>
+  {% else %}
+  <span class="btn btn--ghost btn--sm is-disabled" aria-disabled="true">
+    التالي
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>
+  </span>
+  {% endif %}
+</nav>
+{% endif %}

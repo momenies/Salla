@@ -1,34 +1,33 @@
 {% extends "layout.html" %}
 {% block content %}
 
-{% if error %}
-<div class="alert alert--danger">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-  <div>
-    <strong>تعذّر جلب العملاء من سلة</strong>
-    <p>{{ error }}</p>
-  </div>
-</div>
-{% endif %}
+{% include "partials/alert-error.html" %}
 
 <section class="card">
   <div class="card__head">
     <h2>العملاء</h2>
     <span class="spacer"></span>
-    <span class="badge badge--plain">{{ customers | length }} عميل</span>
+    <a class="btn btn--ghost btn--sm" href="/tools/export/customers.csv">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg>
+      تصدير Excel
+    </a>
   </div>
+
+  <form class="toolbar" method="get" action="/customers" role="search">
+    <div class="field field--grow">
+      <label class="sr-only" for="q">بحث في العملاء</label>
+      <svg class="field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" name="q" type="search" value="{{ filters.q }}" placeholder="ابحث بالاسم أو الجوال أو البريد…" autocomplete="off">
+    </div>
+    <button class="btn btn--primary btn--sm" type="submit">بحث</button>
+    {% if filters.q %}<a class="btn btn--quiet btn--sm" href="/customers">مسح</a>{% endif %}
+  </form>
 
   {% if customers and customers | length %}
   <div class="table-wrap">
     <table class="table">
       <thead>
-        <tr>
-          <th>العميل</th>
-          <th>الجوال</th>
-          <th>البريد الإلكتروني</th>
-          <th>المدينة</th>
-          <th>تاريخ التسجيل</th>
-        </tr>
+        <tr><th>العميل</th><th>الجوال</th><th>البريد الإلكتروني</th><th>المدينة</th><th>آخر تحديث</th><th><span class="sr-only">إجراءات</span></th></tr>
       </thead>
       <tbody>
         {% for customer in customers %}
@@ -38,7 +37,7 @@
               {% if customer.avatar %}
               <img class="avatar avatar--sm" src="{{ customer.avatar }}" alt="" loading="lazy">
               {% else %}
-              <span class="avatar avatar--sm" aria-hidden="true">{{ customer.first_name | truncate(1, true, "") or "؟" }}</span>
+              <span class="avatar avatar--sm" aria-hidden="true">{{ customer.first_name | initial }}</span>
               {% endif %}
               <span class="identity__meta">
                 <strong>{{ customer.first_name }} {{ customer.last_name }}</strong>
@@ -46,39 +45,29 @@
               </span>
             </div>
           </td>
-
+          <td>{% if customer.mobile %}<a class="mono ltr" href="tel:{{ customer.mobile }}">{{ customer.mobile }}</a>{% else %}<span class="subtle">—</span>{% endif %}</td>
+          <td>{% if customer.email %}<a href="mailto:{{ customer.email }}">{{ customer.email }}</a>{% else %}<span class="subtle">—</span>{% endif %}</td>
+          <td>{{ customer.city or "—" }}</td>
+          <td class="small muted">{{ customer.updated_at | date }}</td>
           <td>
             {% if customer.mobile %}
-            <a href="tel:{{ customer.mobile }}" class="mono">{{ customer.mobile }}</a>
-            {% else %}
-            <span class="subtle">—</span>
+            <a class="btn btn--quiet btn--sm" href="/tools/whatsapp?q={{ customer.mobile | urlencode }}">واتساب</a>
             {% endif %}
           </td>
-
-          <td>
-            {% if customer.email %}
-            <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>
-            {% else %}
-            <span class="subtle">—</span>
-            {% endif %}
-          </td>
-
-          <td>{{ customer.city or "—" }}</td>
-
-          <td class="small muted ltr">{{ customer.updated_at.date | truncate(10, true, "") or "—" }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 
+  {% include "partials/pagination.html" %}
+
   {% else %}
   <div class="empty">
-    <span class="empty__icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
-    </span>
-    <h3>لا يوجد عملاء بعد</h3>
-    <p>سيظهر هنا كل عميل يسجّل في متجرك، مع بيانات التواصل الخاصة به.</p>
+    <span class="empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg></span>
+    <h3>{% if filters.q %}لا نتائج مطابقة{% else %}لا يوجد عملاء بعد{% endif %}</h3>
+    <p>{% if filters.q %}جرّب كلمة بحث أخرى.{% else %}سيظهر هنا كل عميل يسجّل في متجرك.{% endif %}</p>
+    {% if filters.q %}<a class="btn btn--ghost btn--sm" href="/customers">مسح البحث</a>{% endif %}
   </div>
   {% endif %}
 </section>

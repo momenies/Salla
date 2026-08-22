@@ -1,86 +1,51 @@
 {% extends "layout.html" %}
 {% block content %}
 
-{% set store = user.merchant or merchant %}
-
 <section class="grid grid--2">
 
   <article class="card">
-    <div class="card__head">
-      <h2>بياناتك الشخصية</h2>
-    </div>
+    <div class="card__head"><h2>بياناتك الشخصية</h2></div>
     <div class="card__body stack">
       <div class="identity">
-        <span class="avatar avatar--lg" aria-hidden="true">{{ user.name | truncate(1, true, "") or "س" }}</span>
+        <span class="avatar avatar--lg" aria-hidden="true">{{ profile.name | initial }}</span>
         <span class="identity__meta">
-          <strong style="font-size: 16px">{{ user.name or "—" }}</strong>
-          <span>{{ user.role or "صاحب المتجر" }}</span>
+          <strong style="font-size: 16px">{{ profile.name or "—" }}</strong>
+          <span>{{ profile.role or "صاحب المتجر" }}</span>
         </span>
       </div>
 
       <dl class="data-list">
-        <div class="data-list__row">
-          <dt>الاسم</dt>
-          <dd>{{ user.name or "—" }}</dd>
-        </div>
-        <div class="data-list__row">
-          <dt>المعرّف</dt>
-          <dd class="mono">{{ user.id or "—" }}</dd>
-        </div>
-        <div class="data-list__row">
-          <dt>البريد الإلكتروني</dt>
-          <dd>
-            {% if user.email %}<a href="mailto:{{ user.email }}">{{ user.email }}</a>{% else %}—{% endif %}
-          </dd>
-        </div>
-        <div class="data-list__row">
-          <dt>الجوال</dt>
-          <dd>
-            {% if user.mobile %}<a href="tel:{{ user.mobile }}" class="mono ltr">{{ user.mobile }}</a>{% else %}—{% endif %}
-          </dd>
-        </div>
+        <div class="data-list__row"><dt>الاسم</dt><dd>{{ profile.name or "—" }}</dd></div>
+        <div class="data-list__row"><dt>المعرّف</dt><dd class="mono ltr">{{ profile.id or "—" }}</dd></div>
+        <div class="data-list__row"><dt>البريد الإلكتروني</dt><dd>{% if profile.email %}<a href="mailto:{{ profile.email }}">{{ profile.email }}</a>{% else %}—{% endif %}</dd></div>
+        <div class="data-list__row"><dt>الجوال</dt><dd>{% if profile.mobile %}<a href="tel:{{ profile.mobile }}" class="mono ltr">{{ profile.mobile }}</a>{% else %}—{% endif %}</dd></div>
       </dl>
     </div>
   </article>
 
   <article class="card">
-    <div class="card__head">
-      <h2>بيانات المتجر</h2>
-    </div>
+    <div class="card__head"><h2>بيانات المتجر</h2></div>
     <div class="card__body stack">
       <div class="identity">
-        {% if store.avatar %}
-        <img class="avatar avatar--lg" src="{{ store.avatar }}" alt="شعار {{ store.name }}">
+        {% if storeInfo.avatar %}
+        <img class="avatar avatar--lg" src="{{ storeInfo.avatar }}" alt="شعار {{ storeInfo.name }}">
         {% else %}
-        <span class="avatar avatar--lg" aria-hidden="true">{{ store.name | truncate(1, true, "") or "م" }}</span>
+        <span class="avatar avatar--lg" aria-hidden="true">{{ storeInfo.name | initial }}</span>
         {% endif %}
         <span class="identity__meta">
-          <strong style="font-size: 16px">{{ store.name or "—" }}</strong>
-          <span>{{ store.plan or "متجر سلة" }}</span>
+          <strong style="font-size: 16px">{{ storeInfo.name or "—" }}</strong>
+          <span>{{ storeInfo.plan or "متجر سلة" }}</span>
         </span>
       </div>
 
       <dl class="data-list">
-        <div class="data-list__row">
-          <dt>اسم المتجر</dt>
-          <dd>{{ store.name or "—" }}</dd>
-        </div>
-        <div class="data-list__row">
-          <dt>معرّف المتجر</dt>
-          <dd class="mono">{{ store.id or "—" }}</dd>
-        </div>
-        <div class="data-list__row">
-          <dt>رابط المتجر</dt>
-          <dd>
-            {% if store.domain %}
-            <a href="{{ store.domain }}" target="_blank" rel="noopener">{{ store.domain }}</a>
-            {% else %}—{% endif %}
-          </dd>
-        </div>
-        <div class="data-list__row">
-          <dt>الحالة</dt>
-          <dd><span class="badge badge--success">{{ store.status or "نشِط" }}</span></dd>
-        </div>
+        <div class="data-list__row"><dt>اسم المتجر</dt><dd>{{ storeInfo.name or "—" }}</dd></div>
+        <div class="data-list__row"><dt>معرّف المتجر</dt><dd class="mono ltr">{{ storeInfo.id or "—" }}</dd></div>
+        <div class="data-list__row"><dt>رابط المتجر</dt><dd>{% if storeInfo.domain %}<a href="{{ storeInfo.domain }}" target="_blank" rel="noopener">{{ storeInfo.domain }}</a>{% else %}—{% endif %}</dd></div>
+        <div class="data-list__row"><dt>الحالة</dt><dd><span class="badge badge--success">{{ storeInfo.status or "نشِط" }}</span></dd></div>
+        {% if store %}
+        <div class="data-list__row"><dt>آخر مزامنة</dt><dd>{{ store.last_synced_at | fromNow }}</dd></div>
+        {% endif %}
       </dl>
     </div>
   </article>

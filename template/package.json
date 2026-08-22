@@ -13,9 +13,10 @@
   "homepage": "https://salla.dev",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test test/*.test.js",
     "serve": "salla app serve",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "start": "node app.js"
   },
   "engines": {
     "node": ">=20.19.0"
@@ -25,6 +26,7 @@
     "@salla.sa/passport-strategy": "^1.0.6",
     "@salla.sa/webhooks-actions": "^1.0",
     "body-parser": "2.2.2",
+    "connect-session-sequelize": "^8.0.6",
     "consolidate": "^1.0.4",
     "dotenv": "17.4.2",
     "express": "4.21.2",

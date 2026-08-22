@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block content %}
+
+{% include "partials/alert-error.html" %}
+
+<section class="card">
+  <div class="card__head">
+    <h2>المنتجات</h2>
+    <span class="spacer"></span>
+    <a class="btn btn--ghost btn--sm" href="/tools/export/products.csv">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg>
+      تصدير Excel
+    </a>
+  </div>
+
+  <form class="toolbar" method="get" action="/products" role="search">
+    <div class="field field--grow">
+      <label class="sr-only" for="q">بحث في المنتجات</label>
+      <svg class="field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" name="q" type="search" value="{{ filters.q }}" placeholder="ابحث باسم المنتج أو رمزه…" autocomplete="off">
+    </div>
+    <button class="btn btn--primary btn--sm" type="submit">بحث</button>
+    {% if filters.q %}<a class="btn btn--quiet btn--sm" href="/products">مسح</a>{% endif %}
+  </form>
+
+  {% if products and products | length %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>المنتج</th><th>الرمز (SKU)</th><th>السعر</th><th>الكمية</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>
+            <div class="identity">
+              {% if product.main_image or product.thumbnail %}
+              <img class="thumb" src="{{ product.main_image or product.thumbnail }}" alt="" loading="lazy">
+              {% else %}
+              <span class="avatar avatar--sm" aria-hidden="true">{{ product.name | initial }}</span>
+              {% endif %}
+              <span class="identity__meta">
+                <strong>{{ product.name | shorten(48) }}</strong>
+                {% if product.url %}<span><a href="{{ product.url }}" target="_blank" rel="noopener">فتح في المتجر ↗</a></span>{% endif %}
+              </span>
+            </div>
+          </td>
+          <td class="mono ltr">{{ product.sku or "—" }}</td>
+          <td class="num">{{ product.price.amount | default(product.price) | money(product.price.currency or currency) }}</td>
+          <td class="num">
+            {% if product.quantity is not null %}
+              {{ product.quantity }}
+              {% if product.quantity == 0 %}<span class="badge badge--danger">نفدت</span>{% endif %}
+            {% else %}<span class="subtle">غير محدودة</span>{% endif %}
+          </td>
+          <td><span class="badge badge--{{ product.status | statusTone }}">{{ product.status or "—" }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "partials/pagination.html" %}
+
+  {% else %}
+  <div class="empty">
+    <span class="empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg></span>
+    <h3>{% if filters.q %}لا نتائج مطابقة{% else %}لا توجد منتجات بعد{% endif %}</h3>
+    <p>{% if filters.q %}جرّب كلمة بحث أخرى.{% else %}أضف منتجاتك من لوحة تحكم سلة وستظهر هنا.{% endif %}</p>
+    {% if filters.q %}<a class="btn btn--ghost btn--sm" href="/products">مسح البحث</a>{% endif %}
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}

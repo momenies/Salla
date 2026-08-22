@@ -127,4 +127,78 @@
       btn.textContent = hidden ? "إظهار" : "إخفاء";
     });
   });
+
+  /* ---------- حاسبة التسعير والضريبة ---------- */
+  var calcRoot = document.querySelector("[data-vat-rate]");
+  if (calcRoot) {
+    var vatRate = parseFloat(calcRoot.getAttribute("data-vat-rate")) || 0.15;
+
+    var fmt = function (n) {
+      if (!isFinite(n)) return "—";
+      return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+    var val = function (id) {
+      var el = document.getElementById(id);
+      var n = el ? parseFloat(el.value) : NaN;
+      return isFinite(n) && n >= 0 ? n : 0;
+    };
+    var put = function (id, n) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = fmt(n);
+    };
+
+    var recalcPricing = function () {
+      var cost = val("cost");
+      var margin = val("margin");
+      var withVat = document.getElementById("includeVat");
+      var profit = cost * (margin / 100);
+      var net = cost + profit;
+      var vat = withVat && withVat.checked ? net * vatRate : 0;
+
+      put("outProfit", profit);
+      put("outNet", net);
+      put("outVat", vat);
+      put("outGross", net + vat);
+    };
+
+    var recalcExtract = function () {
+      var gross = val("gross");
+      var base = gross / (1 + vatRate);
+      put("outBase", base);
+      put("outTaxOnly", gross - base);
+    };
+
+    ["cost", "margin", "includeVat"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener("input", recalcPricing);
+      if (el) el.addEventListener("change", recalcPricing);
+    });
+    var grossEl = document.getElementById("gross");
+    if (grossEl) grossEl.addEventListener("input", recalcExtract);
+
+    recalcPricing();
+    recalcExtract();
+  }
+
+  /* ---------- مولّد رسائل واتساب ---------- */
+  var waMessage = document.getElementById("waMessage");
+
+  document.querySelectorAll("[data-wa-template]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (!waMessage) return;
+      waMessage.value = btn.getAttribute("data-wa-template") || "";
+      waMessage.focus();
+    });
+  });
+
+  document.querySelectorAll("[data-wa-send]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var number = btn.getAttribute("data-wa-number");
+      if (!number) return;
+      var name = btn.getAttribute("data-wa-name") || "";
+      var text = (waMessage ? waMessage.value : "").replace(/\{name\}/g, name).trim();
+      var url = "https://wa.me/" + number + (text ? "?text=" + encodeURIComponent(text) : "");
+      window.open(url, "_blank", "noopener");
+    });
+  });
 })();

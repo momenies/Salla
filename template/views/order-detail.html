@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<a class="back-link" href="/orders">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+  رجوع إلى الطلبات
+</a>
+
+{% include "partials/alert-error.html" %}
+
+{% if order %}
+<section class="grid grid--2">
+  <article class="card">
+    <div class="card__head">
+      <h2>الطلب #{{ order.reference_id or order.id }}</h2>
+      <span class="spacer"></span>
+      <span class="badge badge--{{ order.status.slug | statusTone }}">{{ order.status.name or "—" }}</span>
+    </div>
+    <div class="card__body">
+      <dl class="data-list">
+        <div class="data-list__row"><dt>التاريخ</dt><dd>{{ order.date | datetime }}</dd></div>
+        <div class="data-list__row"><dt>الإجمالي</dt><dd>{{ order.total.amount | money(order.total.currency) }}</dd></div>
+        {% if order.amounts.sub_total %}<div class="data-list__row"><dt>المجموع قبل الشحن</dt><dd>{{ order.amounts.sub_total.amount | money(order.amounts.sub_total.currency) }}</dd></div>{% endif %}
+        {% if order.amounts.shipping_cost %}<div class="data-list__row"><dt>الشحن</dt><dd>{{ order.amounts.shipping_cost.amount | money(order.amounts.shipping_cost.currency) }}</dd></div>{% endif %}
+        {% if order.amounts.tax %}<div class="data-list__row"><dt>الضريبة</dt><dd>{{ order.amounts.tax.amount | money(order.amounts.tax.currency) }}</dd></div>{% endif %}
+        {% if order.payment_method %}<div class="data-list__row"><dt>طريقة الدفع</dt><dd>{{ order.payment_method }}</dd></div>{% endif %}
+        {% if order.source %}<div class="data-list__row"><dt>مصدر الطلب</dt><dd>{{ order.source }}</dd></div>{% endif %}
+      </dl>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="card__head"><h2>العميل</h2></div>
+    <div class="card__body stack">
+      {% if order.customer %}
+      <div class="identity">
+        <span class="avatar avatar--lg" aria-hidden="true">{{ order.customer.first_name | initial }}</span>
+        <span class="identity__meta">
+          <strong style="font-size:16px">{{ order.customer.first_name }} {{ order.customer.last_name }}</strong>
+          <span>{{ order.customer.city or "—" }}</span>
+        </span>
+      </div>
+      <dl class="data-list">
+        <div class="data-list__row"><dt>الجوال</dt><dd>{% if order.customer.mobile %}<a class="ltr mono" href="tel:{{ order.customer.mobile }}">{{ order.customer.mobile }}</a>{% else %}—{% endif %}</dd></div>
+        <div class="data-list__row"><dt>البريد</dt><dd>{% if order.customer.email %}<a href="mailto:{{ order.customer.email }}">{{ order.customer.email }}</a>{% else %}—{% endif %}</dd></div>
+      </dl>
+      {% if order.customer.mobile %}
+      <a class="btn btn--ghost btn--sm" href="/tools/whatsapp?q={{ order.customer.mobile | urlencode }}">مراسلة العميل على واتساب</a>
+      {% endif %}
+      {% else %}
+      <p class="muted">لا توجد بيانات عميل لهذا الطلب.</p>
+      {% endif %}
+    </div>
+  </article>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2>المنتجات</h2>
+    <span class="spacer"></span>
+    <span class="badge badge--plain">{{ order.items | length }} صنف</span>
+  </div>
+  {% if order.items and order.items | length %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead>
+      <tbody>
+        {% for item in order.items %}
+        <tr>
+          <td class="wrap">
+            <strong>{{ item.name }}</strong>
+            {% if item.sku %}<div class="tiny subtle mono">{{ item.sku }}</div>{% endif %}
+          </td>
+          <td class="num">{{ item.quantity }}</td>
+          <td class="num">{{ item.amounts.price_without_tax.amount | default(item.price.amount) | money(order.total.currency) }}</td>
+          <td class="num">{{ item.amounts.total.amount | default(item.total.amount) | money(order.total.currency) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty"><p>لا توجد أصناف في هذا الطلب.</p></div>
+  {% endif %}
+</section>
+
+{% if order.shipping or order.receiver %}
+<section class="card">
+  <div class="card__head"><h2>الشحن والاستلام</h2></div>
+  <div class="card__body">
+    <dl class="data-list">
+      {% if order.receiver.name %}<div class="data-list__row"><dt>المستلم</dt><dd>{{ order.receiver.name }}</dd></div>{% endif %}
+      {% if order.receiver.phone %}<div class="data-list__row"><dt>جوال المستلم</dt><dd class="ltr mono">{{ order.receiver.phone }}</dd></div>{% endif %}
+      {% if order.shipping.company %}<div class="data-list__row"><dt>شركة الشحن</dt><dd>{{ order.shipping.company }}</dd></div>{% endif %}
+      {% if order.shipping.address.shipping_address %}<div class="data-list__row"><dt>العنوان</dt><dd>{{ order.shipping.address.shipping_address }}</dd></div>{% endif %}
+    </dl>
+  </div>
+</section>
+{% endif %}
+{% endif %}
+
+{% endblock %}

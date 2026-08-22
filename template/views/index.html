@@ -11,7 +11,7 @@
   </span>
 
   <h1>{{ appName }}</h1>
-  <p>اربط متجرك على سلة خلال أقل من دقيقة، وتابع طلباتك وعملاءك من لوحة واحدة بسيطة وسريعة.</p>
+  <p>اربط متجرك على سلة خلال أقل من دقيقة، وتابع طلباتك وعملاءك ومنتجاتك من لوحة واحدة بسيطة وسريعة.</p>
 
   <div class="row">
     <a class="btn btn--primary btn--lg" href="/login">
@@ -24,27 +24,27 @@
 
 <section class="grid grid--cards">
   <article class="feature">
-    <span class="feature__icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-    </span>
-    <h3>متابعة الطلبات</h3>
-    <p>اعرض طلبات متجرك بحالاتها ومبالغها ومنتجاتها في جدول واضح ومرتّب.</p>
+    <span class="feature__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg></span>
+    <h3>لوحة تحكم بالأرقام</h3>
+    <p>مبيعات آخر أسبوعين، عدد الطلبات، متوسط قيمة الطلب — كلها أمامك فور الدخول.</p>
   </article>
 
   <article class="feature">
-    <span class="feature__icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
-    </span>
-    <h3>قاعدة عملائك</h3>
-    <p>كل بيانات عملائك في مكان واحد، مع إمكانية التواصل معهم مباشرة عبر الجوال أو البريد.</p>
+    <span class="feature__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+    <h3>طلبات وعملاء ومنتجات</h3>
+    <p>ابحث وصفّي وتنقّل بين الصفحات، وافتح تفاصيل أي طلب بضغطة واحدة.</p>
   </article>
 
   <article class="feature">
-    <span class="feature__icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-    </span>
+    <span class="feature__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0 5 5l-9.2 9.2a2.8 2.8 0 0 1-4-4L15.7 7.3Z"/><path d="M16 3.5 20.5 8"/></svg></span>
+    <h3>أدوات تُغني عن العمل اليدوي</h3>
+    <p>حاسبة تسعير وضريبة، رسائل واتساب جاهزة للعملاء، وتصدير بياناتك إلى Excel.</p>
+  </article>
+
+  <article class="feature">
+    <span class="feature__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
     <h3>ربط آمن ومعتمد</h3>
-    <p>الربط يتم عبر تسجيل دخول سلة الرسمي (OAuth)، ولا نطّلع على كلمة مرور متجرك إطلاقاً.</p>
+    <p>الربط عبر تسجيل دخول سلة الرسمي (OAuth)، ولا نطّلع على كلمة مرور متجرك إطلاقاً.</p>
   </article>
 </section>
 
@@ -78,28 +78,31 @@
 
 {% else %}
 {# ==================== لوحة التحكم ==================== #}
-{% set store = merchant or user.merchant %}
+
+{% include "partials/alert-error.html" %}
 
 <section class="card">
   <div class="card__body">
     <div class="hero-head">
-      {% if store.avatar %}
-      <img class="avatar avatar--xl" src="{{ store.avatar }}" alt="شعار {{ store.name }}">
+      {% if storeInfo.avatar %}
+      <img class="avatar avatar--xl" src="{{ storeInfo.avatar }}" alt="شعار {{ storeInfo.name }}">
       {% else %}
-      <span class="avatar avatar--xl" aria-hidden="true">{{ store.name | truncate(1, true, "") or "س" }}</span>
+      <span class="avatar avatar--xl" aria-hidden="true">{{ storeInfo.name | initial }}</span>
       {% endif %}
 
       <div class="stack" style="gap: 6px; min-width: 0">
-        <h1 style="font-size: 1.45rem">أهلاً بك، {{ user.name or "صاحب المتجر" }} 👋</h1>
+        <h1 style="font-size: 1.45rem">أهلاً بك، {{ profile.name or "صاحب المتجر" }} 👋</h1>
         <p class="muted">
-          أنت متصل الآن بمتجر <strong>{{ store.name or "—" }}</strong>.
-          يمكنك متابعة الطلبات والعملاء من القائمة الجانبية.
+          أنت متصل بمتجر <strong>{{ storeInfo.name or "—" }}</strong>.
+          {% if store and store.subscription_status != "none" %}
+          حالة الاشتراك: <a href="/subscription">{{ store.subscription_status | subscriptionText }}</a>.
+          {% endif %}
         </p>
         <div class="row" style="margin-top: 6px">
           <a class="btn btn--primary btn--sm" href="/orders">عرض الطلبات</a>
-          <a class="btn btn--ghost btn--sm" href="/customers">عرض العملاء</a>
-          {% if store.domain %}
-          <a class="btn btn--quiet btn--sm" href="{{ store.domain }}" target="_blank" rel="noopener">زيارة المتجر ↗</a>
+          <a class="btn btn--ghost btn--sm" href="/tools">الأدوات</a>
+          {% if storeInfo.domain %}
+          <a class="btn btn--quiet btn--sm" href="{{ storeInfo.domain }}" target="_blank" rel="noopener">زيارة المتجر ↗</a>
           {% endif %}
         </div>
       </div>
@@ -110,91 +113,140 @@
 <section class="grid grid--stats">
   <article class="stat">
     <div class="stat__top">
-      <span class="stat__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18l-1.5 11a1 1 0 0 1-1 .9H5.5a1 1 0 0 1-1-.9Z"/><path d="M3 9 5 3h14l2 6"/></svg>
-      </span>
-      <span class="stat__label">المتجر</span>
+      <span class="stat__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+      <span class="stat__label">الطلبات</span>
     </div>
-    <div class="stat__value" style="font-size: 20px">{{ store.name or "—" }}</div>
-    <div class="stat__hint">المعرّف: <span class="ltr">{{ store.id or "—" }}</span></div>
+    <div class="stat__value">{{ stats.count | default(0) | number }}</div>
+    <div class="stat__hint">في آخر دفعة مسحوبة من سلة</div>
   </article>
 
   <article class="stat">
     <div class="stat__top">
-      <span class="stat__icon stat__icon--info" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-      </span>
-      <span class="stat__label">البريد الإلكتروني</span>
+      <span class="stat__icon stat__icon--success" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+      <span class="stat__label">إجمالي المبيعات</span>
     </div>
-    <div class="stat__value truncate" style="font-size: 16px" title="{{ user.email }}">{{ user.email or "—" }}</div>
-    <div class="stat__hint"><span class="ltr">{{ user.mobile or "لا يوجد رقم جوال" }}</span></div>
+    <div class="stat__value">{{ stats.total | default(0) | money(stats.currency) }}</div>
+    <div class="stat__hint">مجموع قيمة الطلبات المعروضة</div>
   </article>
 
   <article class="stat">
     <div class="stat__top">
-      <span class="stat__icon stat__icon--success" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-      </span>
-      <span class="stat__label">حالة الاشتراك</span>
+      <span class="stat__icon stat__icon--info" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg></span>
+      <span class="stat__label">متوسط قيمة الطلب</span>
     </div>
-    <div class="stat__value" style="font-size: 20px">{{ store.plan or "نشِط" }}</div>
-    <div class="stat__hint">{{ store.status or "التطبيق مثبّت على متجرك" }}</div>
+    <div class="stat__value">{{ stats.average | default(0) | money(stats.currency) }}</div>
+    <div class="stat__hint">الإجمالي ÷ عدد الطلبات</div>
   </article>
 
   <article class="stat">
     <div class="stat__top">
-      <span class="stat__icon stat__icon--warning" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-      </span>
-      <span class="stat__label">صلاحية الاتصال</span>
+      <span class="stat__icon stat__icon--warning" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+      <span class="stat__label">العملاء</span>
     </div>
-    <div class="stat__value" style="font-size: 20px">تلقائية</div>
-    <div class="stat__hint"><a href="/refreshToken">تجديد التوكن يدوياً</a></div>
+    <div class="stat__value">{% if customersCount is not null %}{{ customersCount | number }}{% else %}—{% endif %}</div>
+    <div class="stat__hint"><a href="/customers">عرض قائمة العملاء</a></div>
   </article>
 </section>
 
-{% if store %}
+{% if chart %}
 <section class="card">
   <div class="card__head">
-    <h2>بيانات المتجر</h2>
+    <h2>المبيعات خلال آخر ١٤ يوماً</h2>
     <span class="spacer"></span>
-    <span class="badge badge--plain">من واجهة سلة البرمجية</span>
+    <span class="badge badge--plain">{{ chart.total | money(chart.currency) }}</span>
   </div>
   <div class="card__body">
-    {% set labels = {
-      "id": "معرّف المتجر",
-      "username": "الاسم المختصر",
-      "name": "اسم المتجر",
-      "email": "بريد المتجر",
-      "mobile": "جوال المتجر",
-      "domain": "رابط المتجر",
-      "plan": "الباقة",
-      "status": "الحالة",
-      "created_at": "تاريخ الإنشاء",
-      "commercial_number": "السجل التجاري",
-      "tax_number": "الرقم الضريبي",
-      "licenses": "التراخيص",
-      "store_location": "موقع المتجر"
-    } %}
-    <dl class="data-list">
-      {% for key, value in store %}
-        {% if key != "avatar" and value and (value is string or value is number) %}
-        <div class="data-list__row">
-          <dt>{{ labels[key] or key }}</dt>
-          <dd>
-            {% if key == "domain" %}
-              <a href="{{ value }}" target="_blank" rel="noopener">{{ value }}</a>
-            {% else %}
-              {{ value }}
-            {% endif %}
-          </dd>
-        </div>
-        {% endif %}
-      {% endfor %}
-    </dl>
+    {% if chart.hasData %}
+    <div class="chart" role="img" aria-label="مخطّط أعمدة لمبيعات آخر أربعة عشر يوماً. التفاصيل في الجدول أسفله.">
+      <div class="chart__grid" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <ol class="chart__bars">
+        {% for day in chart.days %}
+        <li class="chart__col{% if day.isMax %} is-peak{% endif %}" tabindex="0">
+          <span class="chart__tip">{{ day.label }} · {{ day.total | money(chart.currency) }}{% if day.count %} · {{ day.count | count("طلب","طلبان","طلبات") }}{% endif %}</span>
+          <span class="chart__bar" style="height: {{ day.pct }}%"></span>
+          <span class="chart__label">{{ day.label }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+
+    {# نفس البيانات كجدول — لقارئات الشاشة ولمن يحتاج الأرقام بدقّة #}
+    <details class="chart__table">
+      <summary>عرض الأرقام كجدول</summary>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>اليوم</th><th>المبيعات</th><th>عدد الطلبات</th></tr></thead>
+          <tbody>
+            {% for day in chart.days %}
+            <tr><td>{{ day.label }}</td><td class="num">{{ day.total | money(chart.currency) }}</td><td class="num">{{ day.count }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+    {% else %}
+    <div class="empty">
+      <span class="empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg></span>
+      <h3>لا توجد مبيعات في آخر ١٤ يوماً</h3>
+      <p>سيظهر المخطّط هنا تلقائياً مع أول طلب يصل إلى متجرك.</p>
+    </div>
+    {% endif %}
   </div>
 </section>
 {% endif %}
+
+<section class="grid grid--2">
+  <article class="card">
+    <div class="card__head">
+      <h2>آخر الطلبات</h2>
+      <span class="spacer"></span>
+      <a class="btn btn--quiet btn--sm" href="/orders">عرض الكل</a>
+    </div>
+    {% if recentOrders and recentOrders | length %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>الطلب</th><th>العميل</th><th>الإجمالي</th><th>الحالة</th></tr></thead>
+        <tbody>
+          {% for order in recentOrders %}
+          <tr>
+            <td class="num"><a href="/orders/{{ order.id }}">#{{ order.reference_id or order.id }}</a></td>
+            <td>{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
+            <td class="num">{{ order.total.amount | money(order.total.currency) }}</td>
+            <td><span class="badge badge--{{ order.status.slug | statusTone }}">{{ order.status.name or "—" }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty">
+      <span class="empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+      <h3>لا توجد طلبات بعد</h3>
+      <p>أول طلب يصل متجرك سيظهر هنا مباشرة.</p>
+    </div>
+    {% endif %}
+  </article>
+
+  <article class="card">
+    <div class="card__head"><h2>الطلبات حسب الحالة</h2></div>
+    {% if stats and stats.statuses | length %}
+    <div class="card__body stack">
+      {% for status in stats.statuses %}
+      <div class="meter">
+        <div class="meter__head">
+          <span class="badge badge--{{ status.slug | statusTone }}">{{ status.name }}</span>
+          <span class="spacer"></span>
+          <strong class="num">{{ status.count }}</strong>
+        </div>
+        <div class="meter__track"><span class="meter__fill" style="width: {{ (status.count / stats.count * 100) | round }}%"></span></div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty"><p>لا توجد بيانات حالات بعد.</p></div>
+    {% endif %}
+  </article>
+</section>
 
 {% endif %}
 {% endblock %}

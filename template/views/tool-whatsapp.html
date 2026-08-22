@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<a class="back-link" href="/tools">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+  رجوع إلى الأدوات
+</a>
+
+{% include "partials/alert-error.html" %}
+
+<section class="card">
+  <div class="card__head"><h2>نص الرسالة</h2></div>
+  <div class="card__body stack">
+    <div class="field-block">
+      <label for="waMessage">اكتب رسالتك — استخدم <span class="mono">{name}</span> ليُستبدل باسم العميل</label>
+      <div class="field">
+        <textarea id="waMessage" rows="3">{{ defaultMessage }}</textarea>
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="small muted">قوالب جاهزة:</span>
+      <button class="btn btn--ghost btn--sm" type="button" data-wa-template="أهلاً {name}، تم استلام طلبك وجارٍ تجهيزه 📦">تأكيد طلب</button>
+      <button class="btn btn--ghost btn--sm" type="button" data-wa-template="أهلاً {name}، لاحظنا أن سلتك ما زالت تنتظرك 🛒 نساعدك في إتمام الطلب؟">سلة متروكة</button>
+      <button class="btn btn--ghost btn--sm" type="button" data-wa-template="شكراً لك {name} على ثقتك 🌟 يسعدنا رأيك في تجربتك معنا.">شكر بعد الشراء</button>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2>العملاء</h2>
+    <span class="spacer"></span>
+    <span class="badge badge--plain">{{ customers | length }}</span>
+  </div>
+
+  <form class="toolbar" method="get" action="/tools/whatsapp" role="search">
+    <div class="field field--grow">
+      <label class="sr-only" for="q">بحث عن عميل</label>
+      <svg class="field__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" name="q" type="search" value="{{ filters.q }}" placeholder="ابحث بالاسم أو الجوال…" autocomplete="off">
+    </div>
+    <button class="btn btn--primary btn--sm" type="submit">بحث</button>
+    {% if filters.q %}<a class="btn btn--quiet btn--sm" href="/tools/whatsapp">مسح</a>{% endif %}
+  </form>
+
+  {% if customers and customers | length %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>العميل</th><th>الجوال</th><th>المدينة</th><th><span class="sr-only">إرسال</span></th></tr></thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td>
+            <div class="identity">
+              <span class="avatar avatar--sm" aria-hidden="true">{{ c.name | initial }}</span>
+              <span class="identity__meta"><strong>{{ c.name }}</strong></span>
+            </div>
+          </td>
+          <td class="mono ltr">{{ c.mobile }}</td>
+          <td>{{ c.city or "—" }}</td>
+          <td>
+            <button class="btn btn--primary btn--sm" type="button"
+                    data-wa-send data-wa-number="{{ c.waNumber }}" data-wa-name="{{ c.name }}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.5L3 20.5l1.6-5.5A8.5 8.5 0 1 1 21 11.5Z"/></svg>
+              فتح المحادثة
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty">
+    <span class="empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.5L3 20.5l1.6-5.5A8.5 8.5 0 1 1 21 11.5Z"/></svg></span>
+    <h3>لا يوجد عملاء بأرقام جوال</h3>
+    <p>نعرض هنا فقط العملاء الذين سجّلوا رقم جوال في متجرك.</p>
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}

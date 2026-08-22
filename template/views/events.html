@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+{% block content %}
+
+{% include "partials/alert-error.html" %}
+
+{% if not webhookConfigured %}
+<div class="alert">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+  <div>
+    <strong>سر الويبهوك غير مضبوط</strong>
+    <p>
+      لن تصل أحداث متجرك حتى تضبط <span class="mono">SALLA_WEBHOOK_SECRET</span> في ملف
+      <span class="mono">.env</span>، وتضع رابط الاستقبال
+      {% if webhookUrl %}<span class="mono ltr">{{ webhookUrl }}</span>{% else %}<span class="mono ltr">/webhook</span>{% endif %}
+      في بوابة الشركاء.
+    </p>
+  </div>
+</div>
+{% endif %}
+
+<section class="card">
+  <div class="card__head">
+    <h2>سجل الأحداث</h2>
+    <span class="spacer"></span>
+    <span class="badge badge--plain">{{ pagination.total | default(0) }} حدث</span>
+  </div>
+
+  <form class="toolbar" method="get" action="/events">
+    <div class="field field--grow">
+      <label class="sr-only" for="event">نوع الحدث</label>
+      <select id="event" name="event">
+        <option value="">كل الأحداث</option>
+        {% for name in eventNames %}
+        <option value="{{ name }}" {% if filters.event == name %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="btn btn--primary btn--sm" type="submit">تصفية</button>
+    {% if filters.event %}<a class="btn btn--quiet btn--sm" href="/events">مسح</a>{% endif %}
+  </form>
+
+  {% if events and events | length %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>الحدث</th><th>الحالة</th><th>وصل</th><th>التفاصيل</th></tr></thead>
+      <tbody>
+        {% for e in events %}
+        <tr>
+          <td class="mono ltr">{{ e.event }}</td>
+          <td>
+            {% if e.status == "processed" %}<span class="badge badge--success">تمت المعالجة</span>
+            {% elif e.status == "failed" %}<span class="badge badge--danger">فشل</span>
+            {% else %}<span class="badge">مستلم</span>{% endif %}
+          </td>
+          <td class="small muted">{{ e.createdAt | fromNow }}</td>
+          <td class="wrap">
+            {% if e.error %}<div class="small" style="color: var(--danger)">{{ e.error | shorten(120) }}</div>{% endif %}
+            {% if e.payload %}
+            <details>
+              <summary class="small">عرض البيانات</summary>
+              <pre class="code-block"><code>{{ e.payload | shorten(1200) }}</code></pre>
+            </details>
+            {% else %}<span class="subtle">—</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "partials/pagination.html" %}
+
+  {% else %}
+  <div class="empty">
+    <span class="empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16"/><path d="M4 12h10"/><path d="M4 19h7"/><circle cx="18.5" cy="17.5" r="3.5"/></svg></span>
+    <h3>لم يصل أي حدث بعد</h3>
+    <p>عندما يحدث شيء في متجرك (طلب جديد، عميل جديد، تحديث منتج) سيُسجَّل هنا تلقائياً.</p>
+    <a class="btn btn--ghost btn--sm" href="/tools/diagnostics">افحص إعدادات الويبهوك</a>
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}

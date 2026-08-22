@@ -1,0 +1,61 @@
+/**
+ * اتصال واحد بقاعدة البيانات تشترك فيه كل أجزاء التطبيق.
+ * يُهيّأ مرة عند الإقلاع، ثم تُستدعى `stores()` من أي مكان.
+ */
+const config = require("../config");
+const createDatabase = require("../database");
+const createStoreService = require("./stores");
+
+let connection = null;
+let storeService = null;
+let connecting = null;
+
+const database = createDatabase(config.database.orm);
+
+/** يفتح الاتصال (مرة واحدة حتى لو استُدعي بالتوازي) */
+async function init() {
+  if (connection) return connection;
+  if (!connecting) {
+    connecting = database
+      .connect()
+      .then((conn) => {
+        if (!conn) throw new Error("تعذّر الاتصال بقاعدة البيانات.");
+        connection = conn;
+        storeService = createStoreService(conn);
+        return conn;
+      })
+      .finally(() => {
+        connecting = null;
+      });
+  }
+  return connecting;
+}
+
+function getConnection() {
+  return connection;
+}
+
+function stores() {
+  return storeService;
+}
+
+/** يُستخدم في فحص السلامة و/healthz */
+async function ping() {
+  if (!connection) return false;
+  try {
+    await connection.authenticate();
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+async function close() {
+  if (connection && typeof connection.close === "function") {
+    await connection.close();
+    connection = null;
+    storeService = null;
+  }
+}
+
+module.exports = { init, getConnection, stores, ping, close, database };
