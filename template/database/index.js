@@ -235,6 +235,93 @@ class SallaDatabase {
     }
     return [];
   }
+  // ─────────────────────────── الصلاحيات (الميزات المشتراة) ───────────────
+
+  /** كل صلاحيات متجر، سارية أو منتهية */
+  async listEntitlements(merchant) {
+    const db = await this.ensureConnection();
+    if (this.DATABASE_ORM == "Sequelize") {
+      return await db.models.Entitlements.findAll({ where: { merchant } });
+    }
+    return [];
+  }
+
+  /** مفاتيح الميزات المفتوحة فعلاً الآن (السارية فقط) */
+  async activeFeatureKeys(merchant) {
+    const rows = await this.listEntitlements(merchant);
+    return rows.filter((r) => r.isActive()).map((r) => r.feature_key);
+  }
+
+  /**
+   * يفتح ميزة لمتجر. يحدّث الصف الموجود بدل تكرار الصفوف،
+   * فإعادة إرسال سلة لنفس الحدث لا تُنشئ سجلات مكرّرة.
+   */
+  async grantFeature(merchant, feature_key, data = {}) {
+    const db = await this.ensureConnection();
+    if (this.DATABASE_ORM != "Sequelize") return null;
+
+    const values = {
+      status: "active",
+      source: data.source || "purchase",
+      started_at: data.started_at || new Date(),
+      expires_at: data.expires_at || null,
+    };
+    // لا نكتب فوق الاسم أو النص الخام إلا إذا وصل جديد — التجديد بلا payload
+    // كان يمسح النص المحفوظ الذي نحتاجه للتشخيص
+    if (data.plan_label) values.plan_label = data.plan_label;
+    if (data.raw) values.raw = String(data.raw).slice(0, 20000);
+
+    const row = await db.models.Entitlements.findOne({ where: { merchant, feature_key } });
+    if (row) {
+      await row.update(values);
+      return row;
+    }
+    return await db.models.Entitlements.create({
+      merchant,
+      feature_key,
+      plan_label: null,
+      raw: null,
+      ...values,
+    });
+  }
+
+  /** يقفل ميزة (انتهاء أو إلغاء) دون حذف السجل، حتى يبقى التاريخ */
+  async revokeFeature(merchant, feature_key, status = "expired") {
+    const db = await this.ensureConnection();
+    if (this.DATABASE_ORM != "Sequelize") return null;
+
+    const row = await db.models.Entitlements.findOne({ where: { merchant, feature_key } });
+    if (!row) return null;
+    await row.update({ status });
+    return row;
+  }
+
+  /** يقفل كل ميزات المتجر — عند إلغاء الاشتراك أو إزالة التطبيق */
+  async revokeAllFeatures(merchant, status = "canceled") {
+    const db = await this.ensureConnection();
+    if (this.DATABASE_ORM != "Sequelize") return 0;
+
+    const [count] = await db.models.Entitlements.update(
+      { status },
+      { where: { merchant, status: "active" } }
+    );
+    return count;
+  }
+
+  /** آخر رسالة اشتراك وصلت من سلة — لتعرف الشكل الحقيقي وتضبط المطابقة */
+  async lastSubscriptionPayload(merchant) {
+    const db = await this.ensureConnection();
+    if (this.DATABASE_ORM != "Sequelize") return null;
+
+    // أحدث صف يحمل نصاً فعلاً — الصف الأحدث قد يكون بلا payload
+    const { Op } = require("sequelize");
+    const row = await db.models.Entitlements.findOne({
+      where: { merchant, raw: { [Op.ne]: null } },
+      order: [["updatedAt", "DESC"]],
+    });
+    return row ? row.raw : null;
+  }
+
   async insertMessage(data) {
     const db = await this.ensureConnection();
     if (this.DATABASE_ORM == "Sequelize") {

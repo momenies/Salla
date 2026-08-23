@@ -1,0 +1,92 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div style="margin-bottom:22px">
+    <div class="page-title">الباقات والميزات</div>
+    <div class="page-sub">افتح الميزة التي تحتاجها فقط — وادفع على قدر ما تستخدم</div>
+</div>
+
+{% if locked %}
+<div class="card" style="padding:20px 22px; margin-bottom:18px; border:1px solid #fde68a; background:#fffbeb">
+    <div style="display:flex; align-items:flex-start; gap:13px">
+        <span style="width:38px; height:38px; flex-shrink:0; border-radius:11px; background:#fef3c7; color:#b45309; display:grid; place-items:center">
+            <svg class="ic" style="width:19px;height:19px"><use href="#i-lock"/></svg>
+        </span>
+        <div>
+            <b style="font-size:15.5px">ميزة «{{ locked.name }}» غير مفعّلة في متجرك</b>
+            <div style="font-size:13.5px; color:var(--muted); margin-top:4px">{{ locked.description }}</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:16px; margin-bottom:20px">
+
+    {% for f in features %}
+    {% set isOpen = f.key in open %}
+    <div class="card" style="padding:22px; display:flex; flex-direction:column; gap:12px; {% if isOpen %}border:1px solid #86efac{% endif %}">
+
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px">
+            <div>
+                <b style="font-size:16px; display:block">{{ f.name }}</b>
+                <div style="font-size:13px; color:var(--muted); margin-top:5px; line-height:1.7">{{ f.description }}</div>
+            </div>
+            <span style="flex-shrink:0; width:36px; height:36px; border-radius:11px; display:grid; place-items:center;
+                {% if isOpen %}background:#d9fdd3; color:#0a6847{% else %}background:#f1f5f9; color:#94a3b8{% endif %}">
+                <svg class="ic" style="width:18px;height:18px"><use href="#i-{% if isOpen %}check{% else %}lock{% endif %}"/></svg>
+            </span>
+        </div>
+
+        <div style="margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:8px">
+            {% if f.free %}
+            <span class="pill pill-recovered">مجانية للجميع</span>
+            {% elif isOpen %}
+            <span class="pill pill-recovered">مفعّلة ✓</span>
+            <span style="font-size:12.5px; color:var(--muted)">{{ f.price }}</span>
+            {% else %}
+            <b style="font-size:14.5px">{{ f.price }}</b>
+            {% if appId %}
+            <a class="btn btn-primary" href="https://apps.salla.sa/ar/app/{{ appId }}" target="_blank" rel="noopener">تفعيل</a>
+            {% else %}
+            <span class="pill pill-new">من متجر التطبيقات</span>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+{# ─── الباقة الشاملة ─── #}
+<div class="card" style="padding:24px; margin-bottom:20px; background:linear-gradient(135deg,#f0fdfa,#ecfeff); border:1px solid #99f6e4">
+    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px; justify-content:space-between">
+        <div>
+            <b style="font-size:17px">{{ bundle.name }}</b>
+            <div style="font-size:13.5px; color:var(--muted); margin-top:5px">{{ bundle.description }}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px">
+            <b style="font-size:19px; white-space:nowrap">{{ bundle.price }}</b>
+            {% if appId %}
+            <a class="btn btn-primary" href="https://apps.salla.sa/ar/app/{{ appId }}" target="_blank" rel="noopener">اشترك</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# ─── تشخيص: آخر رسالة اشتراك وصلت من سلة ───
+   تظهر هنا حتى تعرف الشكل الحقيقي الذي ترسله سلة، فتضبط addonMatch
+   في config/features.js دون تخمين. #}
+{% if unmatched %}
+<div class="card" style="padding:20px 22px">
+    <b style="font-size:14.5px">آخر رسالة اشتراك وصلت من سلة</b>
+    <div style="font-size:12.5px; color:var(--muted); margin:6px 0 12px; line-height:1.8">
+        إذا اشترى تاجرٌ إضافةً ولم تُفتح له، انسخ اسم الخطة أو معرّفها من النص أدناه
+        وضعه في <code style="direction:ltr; display:inline-block">addonMatch</code>
+        داخل <code style="direction:ltr; display:inline-block">config/features.js</code>.
+    </div>
+    <pre style="direction:ltr; text-align:left; background:#0f172a; color:#e2e8f0; padding:14px 16px;
+                border-radius:12px; overflow:auto; max-height:260px; font-size:12px; line-height:1.7"><code>{{ unmatched }}</code></pre>
+</div>
+{% endif %}
+
+{% endblock %}

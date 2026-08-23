@@ -8,6 +8,8 @@ const getUnixTimestamp = require("./helpers/getUnixTimestamp");
 const bodyParser = require("body-parser");
 const wa = require("./helpers/wa");
 const wweb = require("./helpers/wa-wweb");
+const { handleSubscriptionEvent, activeFeatures } = require("./helpers/subscriptions");
+const { FEATURES, BUNDLE, paidFeatures, featureForRoute } = require("./config/features");
 const port = process.env.PORT || process.argv[2] || 8082;
 
 /*
@@ -282,11 +284,34 @@ app.use(bodyParser.json());
 
 app.use((req, res, next) => SallaAPI.setExpressVerify(req, res, next));
 
+// تُتاح قائمة الميزات المفتوحة لكل القوالب
+app.use(withFeatures);
+
 // POST /webhook
-app.post("/webhook", function (req, res) {
-  SallaWebhook.checkActions(req.body, req.headers.authorization, {
+app.post("/webhook", async function (req, res) {
+  const body = req.body || {};
+  const eventName = body.event || "unknown";
+  const authorization = req.headers.authorization || "";
+
+  // نتحقّق من السر بأنفسنا حتى نعرف هل رُفض الحدث أم عولج.
+  // (checkActions تتجاهل الحدث بصمت عند سر خاطئ ولا تخبرنا.)
+  const secret = process.env.SALLA_WEBHOOK_SECRET || "";
+  if (secret && authorization !== secret) {
+    console.warn(`webhook: سر غير صحيح للحدث ${eventName} — مرفوض.`);
+    return res.status(401).json({ ok: false });
+  }
+
+  // أحداث الاشتراك تفتح الميزات أو تقفلها
+  try {
+    await handleSubscriptionEvent(body);
+  } catch (err) {
+    console.error(`webhook: فشل معالجة اشتراك ${eventName}:`, err.message);
+  }
+
+  SallaWebhook.checkActions(body, authorization, {
     /* your args to pass to action files or listeners */
   });
+
   // acknowledge receipt immediately so Salla doesn't mark the delivery as failed
   res.sendStatus(200);
 });
@@ -339,6 +364,30 @@ app.get("/", async function (req, res) {
 // GET /account
 // get account information and ensure user is authenticated
 
+
+// GET /plans — الباقات والميزات
+app.get("/plans", ensureAuthenticated, async function (req, res) {
+  const merchantId = req.user && req.user.merchant && req.user.merchant.id;
+  let open = [];
+  let unmatched = null;
+  try {
+    open = [...(await activeFeatures(merchantId))];
+    unmatched = await SallaDatabase.lastSubscriptionPayload(merchantId);
+  } catch (err) {
+    console.log("Error loading plans:", err.message);
+  }
+  res.render("plans.html", {
+    isLogin: req.user,
+    user: req.user,
+    features: FEATURES,
+    bundle: BUNDLE,
+    open,
+    locked: null,
+    appId: process.env.SALLA_APP_ID || "",
+    unmatched,
+  });
+});
+
 app.get("/account", ensureAuthenticated, function (req, res) {
   res.render("account.html", {
     user: req.user,
@@ -363,7 +412,7 @@ app.get("/refreshToken", ensureAuthenticated, function (req, res) {
 // GET /orders
 // get all orders from user store
 
-app.get("/orders", ensureAuthenticated, async function (req, res) {
+app.get("/orders", ensureAuthenticated, requireFeature("order_followups"), async function (req, res) {
   let orders = [];
   try {
     orders = (await SallaAPI.getAllOrders()) || [];
@@ -379,7 +428,7 @@ app.get("/orders", ensureAuthenticated, async function (req, res) {
 // GET /customers
 // get all customers from user store
 
-app.get("/customers", ensureAuthenticated, async function (req, res) {
+app.get("/customers", ensureAuthenticated, requireFeature("customers_crm"), async function (req, res) {
   let customers = [];
   let manual = [];
   try {
@@ -404,7 +453,7 @@ app.get("/customers", ensureAuthenticated, async function (req, res) {
 });
 
 // POST /customers/add — manually add a customer
-app.post("/customers/add", ensureAuthenticated, async function (req, res) {
+app.post("/customers/add", ensureAuthenticated, requireFeature("customers_crm"), async function (req, res) {
   const name = (req.body.name || "").trim();
   const digits = (req.body.mobile || "").replace(/[^0-9]/g, "");
   if (!name || digits.length < 9) {
@@ -425,7 +474,7 @@ app.post("/customers/add", ensureAuthenticated, async function (req, res) {
 });
 
 // POST /customers/delete — remove a manually added customer
-app.post("/customers/delete", ensureAuthenticated, async function (req, res) {
+app.post("/customers/delete", ensureAuthenticated, requireFeature("customers_crm"), async function (req, res) {
   try {
     await SallaDatabase.deleteManualCustomer(req.user.merchant.id, parseInt(req.body.id, 10));
   } catch (err) {
@@ -903,6 +952,54 @@ app.get("/logout", function (req, res) {
 app.listen(port, () => {
   console.log(`🚀 Server is running on http://localhost:${port}`);
 });
+
+
+/**
+ * ─────────────────────── حارس الميزات المدفوعة ───────────────────────
+ * يُوضع بعد ensureAuthenticated على أي مسار يخصّ ميزة مدفوعة.
+ * إن لم يكن التاجر قد اشتراها، نعرض صفحة الباقات بدل رسالة خطأ جافّة —
+ * فهذه أفضل لحظة لإقناعه بالشراء.
+ */
+function requireFeature(featureKey) {
+  return async function (req, res, next) {
+    const merchantId = req.user && req.user.merchant && req.user.merchant.id;
+    let open = new Set();
+    try {
+      open = await activeFeatures(merchantId);
+      if (open.has(featureKey)) return next();
+    } catch (err) {
+      console.log("requireFeature:", err.message);
+    }
+
+    const feature = FEATURES.find((f) => f.key === featureKey);
+    res.status(402).render("plans.html", {
+      isLogin: req.user,
+      user: req.user,
+      features: FEATURES,
+      bundle: BUNDLE,
+      // الحالة الحقيقية — وإلا ظهرت الميزة المجانية مقفلة في هذه الصفحة
+      open: [...open],
+      locked: feature || null,
+      appId: process.env.SALLA_APP_ID || "",
+      unmatched: null,
+    });
+  };
+}
+
+/**
+ * يضع قائمة الميزات المفتوحة في كل صفحة، حتى تعرض القائمة الجانبية
+ * قفلاً بجانب ما لم يُشترَ. لا يمنع شيئاً — العرض فقط.
+ */
+async function withFeatures(req, res, next) {
+  const merchantId = req.user && req.user.merchant && req.user.merchant.id;
+  try {
+    res.locals.openFeatures = [...(await activeFeatures(merchantId))];
+  } catch (err) {
+    res.locals.openFeatures = [];
+  }
+  res.locals.allFeatures = FEATURES;
+  next();
+}
 
 
 // Simple route middleware to ensure user is authenticated.

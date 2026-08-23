@@ -8,6 +8,7 @@ const MerchantSettings = require("./models/merchantsettings");
 const ManualCustomers = require("./models/manualcustomers");
 const Messages = require("./models/messages");
 const Automations = require("./models/automations");
+const Entitlements = require("./models/entitlements");
 
 // We export the sequelize connection instance to be used around our app.
 module.exports = {
@@ -41,6 +42,7 @@ module.exports = {
       ManualCustomers,
       Messages,
       Automations,
+      Entitlements,
     ];
 
     // We define all models according to their files.
