@@ -10,6 +10,7 @@ const wa = require("./helpers/wa");
 const wweb = require("./helpers/wa-wweb");
 const { handleSubscriptionEvent, activeFeatures } = require("./helpers/subscriptions");
 const { FEATURES, BUNDLE, paidFeatures, featureForRoute } = require("./config/features");
+const { buildInvoice } = require("./helpers/invoice");
 const port = process.env.PORT || process.argv[2] || 8082;
 
 /*
@@ -385,6 +386,55 @@ app.get("/plans", ensureAuthenticated, async function (req, res) {
     locked: null,
     appId: process.env.SALLA_APP_ID || "",
     unmatched,
+  });
+});
+
+
+// ─────────────────────────────── الفواتير ───────────────────────────────
+// GET /invoices — قائمة الطلبات، لكل طلب فاتورة
+app.get("/invoices", ensureAuthenticated, requireFeature("invoices"), async function (req, res) {
+  let orders = [];
+  let error = null;
+  try {
+    orders = (await SallaAPI.getAllOrders()) || [];
+  } catch (err) {
+    console.log("Error loading orders for invoices:", err.message);
+    error = "تعذّر جلب الطلبات من سلة.";
+  }
+  res.render("invoices.html", { orders, error, isLogin: req.user, user: req.user });
+});
+
+// GET /invoices/:id — الفاتورة نفسها، مهيّأة للطباعة أو الحفظ PDF
+app.get("/invoices/:id", ensureAuthenticated, requireFeature("invoices"), async function (req, res) {
+  let order = null;
+  try {
+    // سلة لا توفّر جلب طلب واحد في هذه المكتبة، فنأخذه من القائمة
+    const orders = (await SallaAPI.getAllOrders()) || [];
+    order = orders.find((o) => String(o.id) === req.params.id || String(o.reference_id) === req.params.id);
+  } catch (err) {
+    console.log("Error loading order:", err.message);
+  }
+
+  if (!order) {
+    return res.status(404).render("invoices.html", {
+      orders: [],
+      error: "لم نعثر على هذا الطلب.",
+      isLogin: req.user,
+      user: req.user,
+    });
+  }
+
+  let settings = {};
+  try {
+    settings = (await SallaDatabase.getMerchantSettings(req.user.merchant.id)) || {};
+  } catch (err) {
+    /* الإعدادات اختيارية هنا */
+  }
+
+  res.render("invoice-print.html", {
+    invoice: buildInvoice(order, req.user.merchant || {}, settings),
+    isLogin: req.user,
+    user: req.user,
   });
 });
 

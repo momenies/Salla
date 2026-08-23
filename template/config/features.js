@@ -56,6 +56,17 @@ const FEATURES = [
     addonMatch: ["customers_crm", "إدارة العملاء"],
   },
 
+  {
+    key: "invoices",
+    name: "الفواتير",
+    description: "فاتورة جاهزة للطباعة أو الحفظ PDF لكل طلب، بشعار متجرك وبياناته.",
+    icon: "wallet",
+    free: false,
+    routes: ["/invoices"],
+    price: "٢٥ ر.س / شهرياً",
+    addonMatch: ["invoices", "الفواتير"],
+  },
+
   // ➕ الميزات القادمة تُضاف هنا بنفس الشكل
 ];
 

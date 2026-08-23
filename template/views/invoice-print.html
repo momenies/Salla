@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>فاتورة #{{ invoice.number }} — {{ invoice.store.name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; }
+
+  body {
+    font-family: "IBM Plex Sans Arabic", system-ui, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 24px 16px;
+    line-height: 1.7;
+  }
+
+  /* ورقة بمقاس A4 — ما يظهر على الشاشة هو نفسه ما يُطبع */
+  .sheet {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 18mm 16mm;
+    background: #fff;
+    box-shadow: 0 10px 40px rgba(15, 23, 42, .12);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .head { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start;
+          padding-bottom: 18px; border-bottom: 2px solid #0f172a; }
+  .store-name { font-size: 21px; font-weight: 700; }
+  .store-meta { font-size: 12px; color: #64748b; margin-top: 4px; }
+  .doc-title { font-size: 26px; font-weight: 700; text-align: left; }
+  .doc-no { font-size: 13px; color: #64748b; text-align: left; margin-top: 2px; }
+  .logo { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; margin-bottom: 8px; }
+
+  .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin: 22px 0; }
+  .party h3 { font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 6px; }
+  .party p { font-size: 13.5px; }
+  .party .strong { font-weight: 600; font-size: 15px; }
+  .ltr { direction: ltr; unicode-bidi: isolate; text-align: right; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: #f8fafc; text-align: right; padding: 10px 12px;
+             font-size: 11.5px; font-weight: 700; color: #475569;
+             border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+  tbody td { padding: 11px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+  .num { text-align: left; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sku { font-size: 11px; color: #94a3b8; direction: ltr; unicode-bidi: isolate; }
+
+  .totals { margin-top: 18px; margin-inline-start: auto; width: 62mm; font-size: 13.5px; }
+  .totals .row { display: flex; justify-content: space-between; padding: 6px 0; }
+  .totals .grand { border-top: 2px solid #0f172a; margin-top: 6px; padding-top: 10px;
+                   font-size: 16px; font-weight: 700; }
+
+  .foot { margin-top: auto; padding-top: 20px; border-top: 1px solid #e2e8f0;
+          font-size: 11px; color: #94a3b8; line-height: 1.8; }
+
+  .bar { width: 210mm; margin: 0 auto 16px; display: flex; gap: 10px; justify-content: flex-end; }
+  .btn { padding: 10px 20px; border-radius: 10px; border: 1px solid #cbd5e1; background: #fff;
+         color: #0f172a; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+         text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
+  .btn-primary { background: #0f172a; color: #fff; border-color: #0f172a; }
+
+  /* عند الطباعة: تختفي الأزرار وتُملأ الورقة بالكامل */
+  @media print {
+    body { background: #fff; padding: 0; }
+    .bar { display: none; }
+    .sheet { width: auto; min-height: auto; box-shadow: none; padding: 0; }
+    @page { size: A4; margin: 14mm; }
+  }
+
+  @media (max-width: 230mm) {
+    .sheet, .bar { width: 100%; }
+    .parties { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <a class="btn" href="/invoices">رجوع</a>
+  <button class="btn btn-primary" type="button" onclick="window.print()">طباعة / حفظ PDF</button>
+</div>
+
+<div class="sheet">
+
+  <div class="head">
+    <div>
+      {% if invoice.store.avatar %}<img class="logo" src="{{ invoice.store.avatar }}" alt="">{% endif %}
+      <div class="store-name">{{ invoice.store.name }}</div>
+      {% if invoice.store.domain %}<div class="store-meta ltr">{{ invoice.store.domain }}</div>{% endif %}
+      {% if invoice.store.taxNumber %}<div class="store-meta">الرقم الضريبي: <span class="ltr">{{ invoice.store.taxNumber }}</span></div>{% endif %}
+      {% if invoice.store.commercialNumber %}<div class="store-meta">السجل التجاري: <span class="ltr">{{ invoice.store.commercialNumber }}</span></div>{% endif %}
+    </div>
+    <div>
+      <div class="doc-title">فاتورة</div>
+      <div class="doc-no">رقم <span class="ltr">#{{ invoice.number }}</span></div>
+      <div class="doc-no">{{ invoice.date }}</div>
+    </div>
+  </div>
+
+  <div class="parties">
+    <div class="party">
+      <h3>فاتورة إلى</h3>
+      <p class="strong">{{ invoice.customer.name }}</p>
+      {% if invoice.customer.mobile %}<p class="ltr">{{ invoice.customer.mobile }}</p>{% endif %}
+      {% if invoice.customer.email %}<p class="ltr">{{ invoice.customer.email }}</p>{% endif %}
+      {% if invoice.customer.address %}<p>{{ invoice.customer.address }}</p>
+      {% elif invoice.customer.city %}<p>{{ invoice.customer.city }}</p>{% endif %}
+    </div>
+    <div class="party">
+      <h3>تفاصيل الطلب</h3>
+      {% if invoice.status %}<p>الحالة: {{ invoice.status }}</p>{% endif %}
+      {% if invoice.paymentMethod %}<p>طريقة الدفع: <span class="ltr">{{ invoice.paymentMethod }}</span></p>{% endif %}
+      <p>العملة: <span class="ltr">{{ invoice.currency }}</span></p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>الصنف</th>
+        <th class="num">الكمية</th>
+        <th class="num">سعر الوحدة</th>
+        <th class="num">الإجمالي</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in invoice.items %}
+      <tr>
+        <td>
+          {{ item.name }}
+          {% if item.sku %}<div class="sku">{{ item.sku }}</div>{% endif %}
+        </td>
+        <td class="num">{{ item.quantity }}</td>
+        <td class="num">{{ item.unit }}</td>
+        <td class="num">{{ item.total }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:24px">لا توجد أصناف في هذا الطلب</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="totals">
+    {% for t in invoice.totals %}
+    <div class="row"><span>{{ t.label }}</span><span class="ltr">{{ t.value }}</span></div>
+    {% endfor %}
+    <div class="row grand">
+      <span>الإجمالي</span>
+      <span class="ltr">{{ invoice.grandTotal }} {{ invoice.currency }}</span>
+    </div>
+  </div>
+
+  <div class="foot">
+    شكراً لتسوّقك من {{ invoice.store.name }}.
+    <br>
+    هذه فاتورة/إيصال للعميل وليست فاتورة ضريبية إلكترونية معتمدة من هيئة الزكاة والضريبة والجمارك.
+  </div>
+
+</div>
+
+</body>
+</html>
