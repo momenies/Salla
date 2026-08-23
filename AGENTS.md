@@ -14,9 +14,14 @@
 - النشر المخطط: Google Cloud Run (لدى المستخدم رصيد GCP). عند النشر يتغير Callback URL في البوابة إلى الرابط العام.
 - المستودع Git جاهز: الفرع `main`، والجهاز البعيد `origin` هو `https://github.com/momenies/opencode.git`.
 
-## مشروع reels-engine (منصة قص الفيديو) — انتقل خارج Dropbox!
+## مشروع reels-engine (منصة قص الفيديو) — محذوف محلياً!
 
-- **الموقع الجديد الرسمي: `C:\reels-app`** (نُقل من Dropbox بعد أن مسحت مزامنة Dropbox ملفات المشروع مرة كاملة في 2026-08-23). النسخة القديمة احتياطاً في `reels-app-BACKUP-Dropbox` — تحقق منها ثم يمكن حذفها لاحقاً.
+- **`C:\reels-app` حُذف بالكامل بطلب المستخدم (2026-08-23)** بعد رفع الكود إلى GitHub. لم يبقَ محلياً شيء.
+- **الكود موجود على**: `github.com/momenies/opencode` فرع **`reels-app`** (61 ملفاً: web + engine مدمج).
+- **غير المرفوع وضاع مع الحذف**: قاعدة البيانات (حسابات admin@zonexin.com وtest@reels.local)، كل الفيديوهات والمقاطع في storage/، `web/.env` (SESSION_SECRET ومفاتيح Google الفارغة)، وvenv. ذاكرة whisper نجت في `%USERPROFILE%\.cache\huggingface`.
+- **خطوات الاستعادة عند الحاجة**: `git clone -b reels-app https://github.com/momenies/opencode.git C:\reels-app` → `npm install` في web/ → بايثون 3.12 + venv + `pip install -r engine/requirements.txt` → `python scripts/fetch_fonts.py` داخل engine → إنشاء `.env` جديد (SESSION_SECRET، PORT=3000، DEMO_PUBLISH=1) → `node server.js`. المفاتيح السرية القديمة غير موجودة أصلاً (Anthropic ضاع سابقاً، Google لم تُدخل بعد).
+- البنية كانت: `engine` (محرك بايثون) و`web` (SaaS بـ Express+EJS+better-sqlite3) — التفاصيل التقنية أدناه صالحة للاستعادة.
+- إصلاحاتنا على المحرك موجودة الآن في الفرع المرفوع نفسه (render/run/score patches).
 - **Git**: `C:\reels-app` مستودع مستقل الآن؛ يُدفع كفرع `reels-app` على `github.com/momenies/opencode` (`git push origin main:reels-app`) — فرع `main` البعيد لم يُمس. `.gitignore` يستثني .env وdata.sqlite وstorage وvenv وnode_modules وخطوط assets/fonts (تستعاد بـ scripts/fetch_fonts.py). حذفنا `engine\.git` الداخلي حتى تُتتبع تعديلاتنا مباشرة.
 - البنية: `C:\reels-app\engine` (محرك بايثون المستنسخ من momenies/reels-engine + `.venv` بايثون 3.12) و `C:\reels-app\web` (طبقة SaaS بـ Express+EJS+better-sqlite3).
 - تشغيل الموقع: `node server.js` داخل `C:\reels-app\web` (منفذ 3000). حساب تجريبي: test@reels.local / secret123.
