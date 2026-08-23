@@ -35,23 +35,28 @@ const SallaWebhook = require("@salla.sa/webhooks-actions");
 
 SallaWebhook.setSecret(SALLA_WEBHOOK_SECRET);
 
-// مكتبة سلة ترمي خطأً في `on()` إذا كان السر فارغاً، فينهار التطبيق كلياً
-// قبل أن يقلع. الويبهوك ميزة اختيارية أثناء التطوير، فلا يصحّ أن يمنع
-// التشغيل — نسجّل المستمعين فقط عند وجود السر، ونطبع تنبيهاً واضحاً.
-if (SALLA_WEBHOOK_SECRET) {
-  SallaWebhook.on("app.installed", (eventBody, userArgs) => {
-    // handel app.installed event
-  });
-  SallaWebhook.on("app.store.authorize", (eventBody, userArgs) => {
-    // handel app.installed event
-  });
-  SallaWebhook.on("all", (eventBody, userArgs) => {
-    // handel all events even thats not authorized
-  });
-} else {
+// مكتبة سلة ترمي خطأً داخل `on()` إذا كان السر فارغاً، والاستدعاءات تقع على
+// مستوى الوحدة — فينهار التطبيق كلياً قبل أن يقلع. الويبهوك ميزة اختيارية
+// أثناء التطوير، فلا يصحّ أن يمنع التشغيل.
+//
+// نعطّل `on` مرة واحدة هنا بدل حراسة كل استدعاء على حدة، حتى يشمل ذلك أي
+// مستمع يُضاف مستقبلاً في أي مكان من الملف دون أن يعود التطبيق للانهيار.
+if (!SALLA_WEBHOOK_SECRET) {
+  SallaWebhook.on = function () {};
   console.warn("⚠️  SALLA_WEBHOOK_SECRET غير مضبوط — أحداث المتجر (Webhooks) لن تُستقبل.");
   console.warn("    التطبيق يعمل طبيعياً، لكن ضع السر في .env لتفعيل الأتمتة والاشتراكات.");
 }
+
+// Add Listeners
+SallaWebhook.on("app.installed", (eventBody, userArgs) => {
+  // handel app.installed event
+});
+SallaWebhook.on("app.store.authorize", (eventBody, userArgs) => {
+  // handel app.installed event
+});
+SallaWebhook.on("all", (eventBody, userArgs) => {
+  // handel all events even thats not authorized
+});
 
 // ===================== Automation Hub — scenarios =====================
 const AUTOMATION_SCENARIOS = {
@@ -201,10 +206,16 @@ SallaWebhook.on("order.status.updated", async (eventBody) => {
 });
 
 // we initialize our Salla API
+//
+// مكتبة passport ترمي خطأً إن كان clientID فارغاً، فينهار التطبيق قبل أن
+// يقلع. نستخدم قيمة نائبة عند غياب المفاتيح حتى يعمل التطبيق ويعرض
+// الواجهة، ويشرح للمستخدم ما ينقصه بدل أن يرميه في stack trace.
+const SALLA_CONFIGURED = Boolean(SALLA_OAUTH_CLIENT_ID && SALLA_OAUTH_CLIENT_SECRET);
+
 const SallaAPI = new SallaAPIFactory({
-  clientID: SALLA_OAUTH_CLIENT_ID,
-  clientSecret: SALLA_OAUTH_CLIENT_SECRET,
-  callbackURL: SALLA_OAUTH_CLIENT_REDIRECT_URI,
+  clientID: SALLA_OAUTH_CLIENT_ID || "not-configured",
+  clientSecret: SALLA_OAUTH_CLIENT_SECRET || "not-configured",
+  callbackURL: SALLA_OAUTH_CLIENT_REDIRECT_URI || "http://localhost:" + port + "/oauth/callback",
 });
 
 // set Listener on auth success
@@ -1005,6 +1016,17 @@ app.get("/logout", function (req, res) {
     res.redirect("/");
   });
 });
+
+if (!SALLA_CONFIGURED) {
+  console.warn("");
+  console.warn("⚠️  مفاتيح سلة غير مضبوطة — تسجيل الدخول لن يعمل.");
+  console.warn("    افتح ملف .env وضع القيم من بوابة الشركاء:");
+  console.warn("      SALLA_OAUTH_CLIENT_ID=...");
+  console.warn("      SALLA_OAUTH_CLIENT_SECRET=...");
+  console.warn("      SALLA_OAUTH_CLIENT_REDIRECT_URI=http://localhost:" + port + "/oauth/callback");
+  console.warn("    التطبيق يعمل، وتقدر تتصفّح الواجهة، لكن بلا بيانات متجر حقيقية.");
+  console.warn("");
+}
 
 if (unlockAllEnabled()) {
   console.warn("⚠️  وضع التجربة مفعّل (UNLOCK_ALL_FEATURES) — كل الميزات مفتوحة بلا شراء.");
