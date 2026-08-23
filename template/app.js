@@ -340,7 +340,25 @@ app.post("/webhook", async function (req, res) {
 //   request. The first step in salla authentication will involve redirecting
 //   the user to accounts.salla.sa. After authorization, salla will redirect the user
 //   back to this application at /oauth/callback
-app.get(["/oauth/redirect", "/login"], passport.authenticate("salla"));
+app.get(["/oauth/redirect", "/login"], function (req, res, next) {
+  // بلا مفاتيح حقيقية سترفضنا سلة برسالة غامضة
+  // ("The requested OAuth 2.0 Client does not exist")، فنشرح المشكلة هنا
+  // بدل أن نرمي المستخدم إلى صفحة خطأ عند سلة.
+  if (!SALLA_CONFIGURED) {
+    const guessed =
+      SALLA_OAUTH_CLIENT_REDIRECT_URI ||
+      `${req.protocol}://${req.get("host")}/oauth/callback`;
+    return res.status(503).render("setup.html", {
+      isLogin: false,
+      user: null,
+      callbackUrl: guessed,
+      hasClientId: Boolean(SALLA_OAUTH_CLIENT_ID),
+      hasClientSecret: Boolean(SALLA_OAUTH_CLIENT_SECRET),
+      hasRedirect: Boolean(SALLA_OAUTH_CLIENT_REDIRECT_URI),
+    });
+  }
+  return passport.authenticate("salla")(req, res, next);
+});
 
 // GET /oauth/callback
 //   Use passport.authenticate() as route middleware to authenticate the
