@@ -35,16 +35,23 @@ const SallaWebhook = require("@salla.sa/webhooks-actions");
 
 SallaWebhook.setSecret(SALLA_WEBHOOK_SECRET);
 
-// Add Listeners
-SallaWebhook.on("app.installed", (eventBody, userArgs) => {
-  // handel app.installed event
-});
-SallaWebhook.on("app.store.authorize", (eventBody, userArgs) => {
-  // handel app.installed event
-});
-SallaWebhook.on("all", (eventBody, userArgs) => {
-  // handel all events even thats not authorized
-});
+// مكتبة سلة ترمي خطأً في `on()` إذا كان السر فارغاً، فينهار التطبيق كلياً
+// قبل أن يقلع. الويبهوك ميزة اختيارية أثناء التطوير، فلا يصحّ أن يمنع
+// التشغيل — نسجّل المستمعين فقط عند وجود السر، ونطبع تنبيهاً واضحاً.
+if (SALLA_WEBHOOK_SECRET) {
+  SallaWebhook.on("app.installed", (eventBody, userArgs) => {
+    // handel app.installed event
+  });
+  SallaWebhook.on("app.store.authorize", (eventBody, userArgs) => {
+    // handel app.installed event
+  });
+  SallaWebhook.on("all", (eventBody, userArgs) => {
+    // handel all events even thats not authorized
+  });
+} else {
+  console.warn("⚠️  SALLA_WEBHOOK_SECRET غير مضبوط — أحداث المتجر (Webhooks) لن تُستقبل.");
+  console.warn("    التطبيق يعمل طبيعياً، لكن ضع السر في .env لتفعيل الأتمتة والاشتراكات.");
+}
 
 // ===================== Automation Hub — scenarios =====================
 const AUTOMATION_SCENARIOS = {
