@@ -11,6 +11,23 @@
 const SallaDatabase = require("./salla-db");
 const { matchFeatures, FEATURES, BUNDLE } = require("../config/features");
 
+/**
+ * هل وضع "افتح كل الميزات" مفعّل؟
+ * يُتجاهل في الإنتاج مهما كانت قيمة المتغيّر.
+ */
+function unlockAllEnabled() {
+  const on = ["1", "true", "yes"].includes(String(process.env.UNLOCK_ALL_FEATURES || "").toLowerCase());
+  if (!on) return false;
+  if (process.env.NODE_ENV === "production") {
+    if (!unlockAllEnabled._warned) {
+      console.error("⛔ UNLOCK_ALL_FEATURES مفعّل لكن البيئة إنتاج — تم تجاهله. احذفه من .env.");
+      unlockAllEnabled._warned = true;
+    }
+    return false;
+  }
+  return true;
+}
+
 /** الأحداث التي تفتح ميزة */
 const GRANT_EVENTS = new Set([
   "app.subscription.started",
@@ -135,6 +152,11 @@ async function handleSubscriptionEvent(eventBody) {
  */
 async function activeFeatures(merchant) {
   const free = FEATURES.filter((f) => f.free).map((f) => f.key);
+
+  // وضع التجربة: يفتح كل الميزات بلا شراء، للتطوير والتجربة المحلية فقط.
+  // مُعطَّل قسراً في الإنتاج — لو بقي مفعّلاً بعد النشر لأعطى التطبيق مجاناً للجميع.
+  if (unlockAllEnabled()) return new Set(FEATURES.map((f) => f.key));
+
   if (!merchant) return new Set(free);
 
   let purchased = [];
@@ -147,6 +169,7 @@ async function activeFeatures(merchant) {
 }
 
 module.exports = {
+  unlockAllEnabled,
   handleSubscriptionEvent,
   activeFeatures,
   isSubscriptionEvent,

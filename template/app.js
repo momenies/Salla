@@ -8,7 +8,7 @@ const getUnixTimestamp = require("./helpers/getUnixTimestamp");
 const bodyParser = require("body-parser");
 const wa = require("./helpers/wa");
 const wweb = require("./helpers/wa-wweb");
-const { handleSubscriptionEvent, activeFeatures } = require("./helpers/subscriptions");
+const { handleSubscriptionEvent, activeFeatures, unlockAllEnabled } = require("./helpers/subscriptions");
 const { FEATURES, BUNDLE, paidFeatures, featureForRoute } = require("./config/features");
 const { buildInvoice } = require("./helpers/invoice");
 const port = process.env.PORT || process.argv[2] || 8082;
@@ -999,6 +999,11 @@ app.get("/logout", function (req, res) {
   });
 });
 
+if (unlockAllEnabled()) {
+  console.warn("⚠️  وضع التجربة مفعّل (UNLOCK_ALL_FEATURES) — كل الميزات مفتوحة بلا شراء.");
+  console.warn("    احذف المتغيّر من .env قبل النشر، وإلا لن يدفع أحد.");
+}
+
 app.listen(port, () => {
   console.log(`🚀 Server is running on http://localhost:${port}`);
 });
@@ -1048,6 +1053,7 @@ async function withFeatures(req, res, next) {
     res.locals.openFeatures = [];
   }
   res.locals.allFeatures = FEATURES;
+  res.locals.unlockAll = unlockAllEnabled();
   next();
 }
 
