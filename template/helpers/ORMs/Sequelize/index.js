@@ -1,69 +1,116 @@
 const { Sequelize, DataTypes } = require("sequelize");
+const log = require("../../../lib/logger");
 
-const OauthTokens = require("./models/oauthtokens");
-const PasswordResets = require("./models/passwordresets");
-const User = require("./models/user");
-const AbandonedCarts = require("./models/abandonedcarts");
-const MerchantSettings = require("./models/merchantsettings");
-const ManualCustomers = require("./models/manualcustomers");
-const Messages = require("./models/messages");
-const Automations = require("./models/automations");
-const Entitlements = require("./models/entitlements");
+const modelFiles = [
+  require("./models/oauthtokens"),
+  require("./models/passwordresets"),
+  require("./models/user"),
+  require("./models/abandonedcarts"),
+  require("./models/merchantsettings"),
+  require("./models/manualcustomers"),
+  require("./models/messages"),
+  require("./models/automations"),
+  require("./models/entitlements"),
+  require("./models/sessions"),
+];
 
-// We export the sequelize connection instance to be used around our app.
+/**
+ * أعمدة أُضيفت بعد إطلاق نسخ سابقة. `sequelize.sync()` ينشئ الجداول الناقصة
+ * لكنه لا يضيف عموداً إلى جدول موجود — فتنكسر التركيبات القديمة عند التحديث.
+ * هذه القائمة تسدّ تلك الفجوة بأمان (تُنفَّذ فقط إن كان العمود غائباً).
+ */
+const COLUMN_PATCHES = [
+  ["MerchantSettings", "channel", { type: DataTypes.STRING }],
+  ["MerchantSettings", "msg_template", { type: DataTypes.TEXT }],
+  ["MerchantSettings", "quiet_hours", { type: DataTypes.STRING }],
+  ["MerchantSettings", "daily_cap", { type: DataTypes.INTEGER }],
+  ["MerchantSettings", "sender_name", { type: DataTypes.STRING }],
+  ["OauthTokens", "expires_at", { type: DataTypes.INTEGER }],
+  ["OauthTokens", "merchant", { type: DataTypes.BIGINT }],
+  ["OauthTokens", "scope", { type: DataTypes.STRING }],
+  ["Messages", "channel", { type: DataTypes.STRING }],
+  ["AbandonedCarts", "recovered_at", { type: DataTypes.INTEGER }],
+  ["AbandonedCarts", "reminders_sent", { type: DataTypes.INTEGER }],
+];
+
+function buildSequelize() {
+  const {
+    DATABASE_STORAGE,
+    DATABASE_SERVER,
+    DATABASE_USERNAME,
+    DATABASE_PASSWORD,
+    DATABASE_NAME,
+    DATABASE_URL,
+    DATABASE_DIALECT,
+    DATABASE_POOL_MAX,
+  } = process.env;
+
+  const pool = { max: parseInt(DATABASE_POOL_MAX, 10) || 10, min: 0, idle: 10000, acquire: 30000 };
+  const logging = process.env.DATABASE_LOG === "1" ? (sql) => log.debug(sql) : false;
+
+  // 1) رابط كامل (Postgres/MySQL على منصّات السحابة عادةً)
+  if (DATABASE_URL) {
+    return new Sequelize(DATABASE_URL, { logging, pool });
+  }
+  // 2) ملف SQLite محلي — صفر إعدادات، وهو الافتراضي للتطوير
+  if (DATABASE_STORAGE || !DATABASE_SERVER) {
+    return new Sequelize({
+      dialect: "sqlite",
+      storage: DATABASE_STORAGE || "database.sqlite",
+      logging,
+    });
+  }
+  // 3) خادم قاعدة بيانات صريح
+  return new Sequelize({
+    host: DATABASE_SERVER,
+    username: DATABASE_USERNAME,
+    password: DATABASE_PASSWORD,
+    database: DATABASE_NAME,
+    dialect: DATABASE_DIALECT || "mysql",
+    logging,
+    pool,
+  });
+}
+
+async function applyColumnPatches(sequelize) {
+  const qi = sequelize.getQueryInterface();
+  for (const [modelName, column, spec] of COLUMN_PATCHES) {
+    const model = sequelize.models[modelName];
+    if (!model) continue;
+    try {
+      const table = model.getTableName();
+      const cols = await qi.describeTable(table);
+      if (!cols[column]) {
+        await qi.addColumn(table, column, spec);
+        log.info(`ترقية قاعدة البيانات: أُضيف العمود ${modelName}.${column}`);
+      }
+    } catch (err) {
+      log.warn(`تعذّرت ترقية ${modelName}.${column}`, { error: err.message });
+    }
+  }
+}
+
 module.exports = {
   connect: async () => {
-    // In a real app, you should keep the database connection URL as an environment variable.
-    // But for this example, we will just use a local SQLite database.
-    // const sequelize = new Sequelize(process.env.DB_CONNECTION_URL);
-    // If DATABASE_STORAGE is set, use a local SQLite file (zero setup, great for dev).
-    // Otherwise fall back to MySQL using the standard DATABASE_* environment variables.
-    const sequelize = process.env.DATABASE_STORAGE
-      ? new Sequelize({
-          dialect: "sqlite",
-          storage: process.env.DATABASE_STORAGE,
-          logging: false,
-        })
-      : new Sequelize({
-          host: process.env.DATABASE_SERVER,
-          username: process.env.DATABASE_USERNAME,
-          password: process.env.DATABASE_PASSWORD,
-          database: process.env.DATABASE_NAME,
-          dialect: "mysql",
-          logging: true,
-        });
+    const sequelize = buildSequelize();
 
-    const modelDefiners = [
-      OauthTokens,
-      PasswordResets,
-      User,
-      AbandonedCarts,
-      MerchantSettings,
-      ManualCustomers,
-      Messages,
-      Automations,
-      Entitlements,
-    ];
-
-    // We define all models according to their files.
-    for (let i = 0; i < modelDefiners.length; i++) {
-      modelDefiners[i] = modelDefiners[i](sequelize, DataTypes);
-      modelDefiners[i].associate(sequelize.models);
+    for (const definer of modelFiles) {
+      definer(sequelize, DataTypes);
+    }
+    for (const model of Object.values(sequelize.models)) {
+      if (typeof model.associate === "function") model.associate(sequelize.models);
     }
 
-    // We execute any associates  after the models are defined .
-    // Wait for tables to be ready before returning the connection.
+    await sequelize.authenticate();
     await sequelize.sync();
+    await applyColumnPatches(sequelize);
 
-    // lightweight column migrations (SQLite sync() does not alter existing tables)
-    try {
-      const qi = sequelize.getQueryInterface();
-      const table = sequelize.models.MerchantSettings.getTableName();
-      const cols = await qi.describeTable(table);
-      if (!cols.channel) await qi.addColumn(table, "channel", { type: DataTypes.STRING });
-      if (!cols.msg_template) await qi.addColumn(table, "msg_template", { type: DataTypes.TEXT });
-    } catch (e) {
-      console.log("migration note:", e.message);
+    // SQLite: WAL يجعل القراءة والكتابة تتزامنان بلا أقفال — فرق ملموس
+    // حين يعمل مُرسل الرسائل في الخلفية بينما التاجر يتصفّح لوحته.
+    if (sequelize.getDialect() === "sqlite") {
+      await sequelize.query("PRAGMA journal_mode = WAL;");
+      await sequelize.query("PRAGMA synchronous = NORMAL;");
+      await sequelize.query("PRAGMA busy_timeout = 5000;");
     }
 
     return sequelize;

@@ -1,287 +1,299 @@
 {% extends 'layout.html' %}
+{% block title %}الإعدادات · {{ appName }}{% endblock %}
+{% block pagename %}الإعدادات{% endblock %}
 {% block content %}
 
-<div class="page-title" style="margin-bottom:4px">الإعدادات</div>
-<div class="page-sub">اختر طريقة ربط واتساب المناسبة لك، وفعّل الإرسال التلقائي للتذكيرات</div>
+<div class="page-head">
+  <div>
+    <h1 class="page-title">الإعدادات</h1>
+    <p class="page-sub">اربط قناة واتساب، اكتب رسالتك، واضبط متى وكم يُرسل التطبيق.</p>
+  </div>
+  <div class="page-actions">
+    <form method="post" action="/settings/runnow" data-busy>
+      <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+      <button class="btn btn-ghost"><svg class="ic ic-sm"><use href="#i-refresh"/></svg> تشغيل دورة الآن</button>
+    </form>
+  </div>
+</div>
 
-<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-top:22px">
+<form method="post" action="/settings/save" id="cfgForm" data-busy>
+<input type="hidden" name="_csrf" value="{{ csrfToken }}">
+<input type="hidden" name="channel" id="channelInput" value="{{ cfg.channel }}">
 
-    <!-- حالة الأتمتة -->
-    <div class="card" style="display:flex; flex-direction:column">
-        <b style="font-size:15px; display:flex; align-items:center; gap:8px">
-            <svg class="ic" style="width:18px;height:18px;color:#059669"><use href="#i-zap"/></svg> الأتمتة التلقائية
-        </b>
-        <div style="margin:16px 0 10px">
-            {% if cfg.auto_enabled %}
-            <span class="pill pill-recovered">الأتمتة مُفعّلة</span>
-            {% else %}
-            <span class="pill pill-new">الأتمتة متوقفة</span>
-            {% endif %}
-        </div>
-        <p style="color:var(--muted); font-size:12.5px; line-height:1.9">
-            عند تفعيلها يُرسَل التذكير تلقائياً بعد <b>{{ cfg.delay_minutes }}</b> دقيقة من ترك السلة — دون أي تدخل منك.
-        </p>
-        <form method="post" action="/settings/runnow" style="margin-top:auto">
-            <button type="submit" class="btn btn-primary" style="width:100%">
-                <svg class="ic" style="width:16px;height:16px"><use href="#i-send"/></svg> تشغيل الفحص الآن للتجربة
-            </button>
-        </form>
+<div class="grid grid-2">
+
+  {# ── القناة ────────────────────────────────────────────────────────── #}
+  <div class="card">
+    <span class="card-title mb"><svg class="ic-f ic-sm" style="color:var(--brand-500)"><use href="#i-wa"/></svg> قناة الإرسال</span>
+
+    <div class="tabs mb">
+      <button type="button" class="tab" id="tabCloud" data-chan="cloud">🏛️ Meta الرسمية</button>
+      <button type="button" class="tab" id="tabWweb" data-chan="wweb">⚡ باركود سريع</button>
     </div>
 
-    <!-- الربط -->
-    <div class="card">
-        <b style="font-size:15px; display:flex; align-items:center; justify-content:space-between">
-            <span style="display:flex; align-items:center; gap:8px">
-                <svg class="ic-f" style="width:19px;height:19px;color:#22c55e"><use href="#i-wa"/></svg> طريقة ربط واتساب
-            </span>
-        </b>
-
-        <form method="post" action="/settings/save" id="cfgForm">
-            <input type="hidden" name="channel" id="channelInput" value="{{ cfg.channel or "cloud" }}">
-
-            <div class="tabs" style="margin-top:14px" id="connTabs">
-                <button type="button" class="tab" id="tabWweb" onclick="switchTab('wweb')">⚡ باركود سريع</button>
-                <button type="button" class="tab" id="tabCloud" onclick="switchTab('cloud')">🏛️ Meta الرسمي</button>
-            </div>
-
-            <!-- ===== تبويب الباركود ===== -->
-            <div id="paneWweb" style="display:none; padding:18px 0 4px">
-                <div id="qrArea" style="text-align:center; min-height:120px">
-                    <button type="button" class="btn btn-primary" onclick="connectQr(this)" id="qrStartBtn" style="padding:13px 30px">
-                        🔗 اتصال — أظهر الباركود
-                    </button>
-                </div>
-                <p style="color:var(--muted); font-size:12px; text-align:center; margin-top:10px">
-                    من تطبيق واتساب عندك: <b>الأجهزة المرتبطة ← ربط جهاز</b> ثم وجّه الكاميرا على الرمز
-                </p>
-            </div>
-
-            <!-- ===== تبويب Meta ===== -->
-            <div id="paneCloud" style="display:none; padding:18px 0 4px">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px">
-                    <label style="display:block">
-                        <span style="font-size:12.5px; color:var(--muted); font-weight:700">Phone Number ID</span>
-                        <input name="wa_phone_id" dir="ltr" value="{{ cfg.phone_id }}" placeholder="1234567890"
-                            style="width:100%; margin-top:6px; border:1.5px solid var(--border); border-radius:11px; padding:11px 13px; font-family:inherit; font-size:13.5px; outline:none">
-                    </label>
-                    <label style="display:block">
-                        <span style="font-size:12.5px; color:var(--muted); font-weight:700">Access Token الدائم</span>
-                        <input name="wa_token" dir="ltr" type="password" placeholder="{% if cfg.token_last4 %}••••••••{{ cfg.token_last4 }} — اتركه فارغاً للإبقاء{% else %}EAAG…{% endif %}"
-                            style="width:100%; margin-top:6px; border:1.5px solid var(--border); border-radius:11px; padding:11px 13px; font-family:inherit; font-size:13.5px; outline:none">
-                    </label>
-                    <label style="display:block">
-                        <span style="font-size:12.5px; color:var(--muted); font-weight:700">اسم قالب Meta</span>
-                        <input name="template_name" dir="ltr" value="{{ cfg.template_name }}"
-                            style="width:100%; margin-top:6px; border:1.5px solid var(--border); border-radius:11px; padding:11px 13px; font-family:inherit; font-size:13.5px; outline:none">
-                    </label>
-                    <div style="display:flex; align-items:end">
-                        <button type="button" class="btn btn-ghost" style="width:100%" onclick="testConn(this)">
-                            <svg class="ic" style="width:15px;height:15px"><use href="#i-shield"/></svg> اختبار اتصال Meta
-                        </button>
-                    </div>
-                </div>
-                <div id="testResult" style="display:none; margin-top:12px; border-radius:12px; padding:11px 14px; font-size:13px"></div>
-            </div>
-
-            <!-- ===== مشترك بين الطريقتين ===== -->
-            <div style="border-top:1px dashed var(--border); margin-top:6px; padding-top:16px">
-                <label style="display:block">
-                    <span style="font-size:12.5px; color:var(--muted); font-weight:700">
-                        نص رسالة التذكير التلقائية <span id="tplHint">(لطريقة الباركود — تُستبدل الكلمات المميزة تلقائياً)</span>
-                    </span>
-                    <textarea name="msg_template" rows="4" id="tplInput" oninput="updateTplBubble()"
-                        placeholder="مرحباً [الاسم] 👋&#10;لاحظنا أنك تركت منتجات في سلتك بمتجر [المتجر] 😊&#10;أكمل طلبك الآن:&#10;[الرابط]"
-                        style="width:100%; margin-top:6px; border:1.5px solid var(--border); border-radius:11px; padding:12px 14px; font-family:inherit; font-size:13.5px; line-height:1.9; resize:vertical; outline:none">{{ cfg.msg_template }}</textarea>
-                </label>
-
-                <div style="margin-top:12px">
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
-                        <svg class="ic-f" style="width:15px;height:15px;color:#25d366"><use href="#i-wa"/></svg>
-                        <span style="font-size:12px; font-weight:700; color:var(--muted)">معاينة مباشرة — كما ستصل للعميل</span>
-                    </div>
-                    <div class="wa-chat">
-                        <div class="wa-bubble">
-                            <span id="tplBubble"></span>
-                            <div class="wa-time">{{ user.merchant.name or "متجرك" }} ✓✓</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:12px">
-                    <label style="display:block">
-                        <span style="font-size:12.5px; color:var(--muted); font-weight:700">أرسل التذكير بعد</span>
-                        <select name="delay_minutes" style="width:100%; margin-top:6px; border:1.5px solid var(--border); border-radius:11px; padding:11px 13px; font-family:inherit; font-size:13.5px; background:#fff; outline:none">
-                            <option value="30" {% if cfg.delay_minutes === 30 %}selected{% endif %}>30 دقيقة</option>
-                            <option value="60" {% if cfg.delay_minutes === 60 %}selected{% endif %}>ساعة واحدة</option>
-                            <option value="120" {% if cfg.delay_minutes === 120 %}selected{% endif %}>ساعتان</option>
-                            <option value="180" {% if cfg.delay_minutes === 180 %}selected{% endif %}>3 ساعات</option>
-                            <option value="1440" {% if cfg.delay_minutes === 1440 %}selected{% endif %}>يوم كامل</option>
-                        </select>
-                    </label>
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;
-                                  background:{% if cfg.auto_enabled %}#ecfdf5{% else %}#f8fafc{% endif %};
-                                  border:1.5px solid {% if cfg.auto_enabled %}#a7f3d0{% else %}var(--border){% endif %};
-                                  border-radius:12px; padding:11px 14px; align-self:end">
-                        <input type="checkbox" name="auto_enabled" {% if cfg.auto_enabled %}checked{% endif %} onchange="this.closest('label').style.background=this.checked?'#ecfdf5':'#f8fafc'" style="width:18px; height:18px; accent-color:#059669">
-                        <span style="font-size:13px; font-weight:700">{% if cfg.auto_enabled %}✅ الأتمتة مفعّلة{% else %}تفعيل الأتمتة{% endif %}</span>
-                    </label>
-                </div>
-
-                <div style="margin-top:16px">
-                    <button type="submit" class="btn btn-primary">
-                        <svg class="ic" style="width:16px;height:16px"><use href="#i-check"/></svg> حفظ الإعدادات
-                    </button>
-                </div>
-            </div>
-        </form>
+    {# ---- Meta ---- #}
+    <div id="paneCloud">
+      <label class="field">
+        <span class="label">معرّف الرقم (Phone Number ID)</span>
+        <input name="wa_phone_id" class="input input-ltr" value="{{ cfg.phone_id }}" placeholder="123456789012345">
+      </label>
+      <label class="field">
+        <span class="label">رمز الوصول الدائم (Access Token)</span>
+        <input name="wa_token" type="password" class="input input-ltr"
+               placeholder="{% if cfg.token_last4 %}••••••••{{ cfg.token_last4 }} — اتركه فارغاً للإبقاء عليه{% else %}EAAG…{% endif %}">
+        <span class="hint">لا نعرضه بعد الحفظ إطلاقاً. اتركه فارغاً إن لم ترد تغييره.</span>
+      </label>
+      <label class="field">
+        <span class="label">اسم القالب المعتمد لدى Meta</span>
+        <input name="template_name" class="input input-ltr" value="{{ cfg.template_name }}">
+      </label>
+      <button type="button" class="btn btn-ghost btn-block mt" id="testBtn">
+        <svg class="ic ic-sm"><use href="#i-shield"/></svg> اختبار الاتصال بـ Meta
+      </button>
+      <div id="testResult" class="alert alert-info mt hide"></div>
     </div>
 
-    <!-- دليل Meta -->
-    <div class="card" id="metaGuide" style="grid-column:1/-1; background:linear-gradient(135deg,#f0f9ff,#ffffff)">
-        <b style="font-size:15px; display:flex; align-items:center; gap:8px">
-            <svg class="ic" style="width:18px;height:18px;color:#2563eb"><use href="#i-box"/></svg>
-            خطوات طريقة Meta الرسمية (مرة واحدة فقط)
-        </b>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-top:16px">
-            <div style="display:flex; gap:11px">
-                <div class="avatar-letter" style="background:linear-gradient(135deg,#60a5fa,#2563eb); width:30px; height:30px; border-radius:9px; font-size:13px">١</div>
-                <p style="font-size:12.5px; color:var(--muted); line-height:1.8">من <b dir="ltr">developers.facebook.com</b> أنشئ تطبيق نوع Business وأضف منتج WhatsApp</p>
-            </div>
-            <div style="display:flex; gap:11px">
-                <div class="avatar-letter" style="background:linear-gradient(135deg,#60a5fa,#2563eb); width:30px; height:30px; border-radius:9px; font-size:13px">٢</div>
-                <p style="font-size:12.5px; color:var(--muted); line-height:1.8">انسخ Phone Number ID والرمز الدائم من System Users مع صلاحية <b dir="ltr">whatsapp_business_messaging</b></p>
-            </div>
-            <div style="display:flex; gap:11px">
-                <div class="avatar-letter" style="background:linear-gradient(135deg,#34d399,#059669); width:30px; height:30px; border-radius:9px; font-size:13px">٣</div>
-                <p style="font-size:12.5px; color:var(--muted); line-height:1.8">أنشئ قالباً باسم <b dir="ltr">cart_reminder</b> بالفئة Marketing ونص:</p>
-            </div>
+    {# ---- الباركود ---- #}
+    <div id="paneWweb" class="hide">
+      {% if qrAvailable %}
+      <div id="qrArea" class="center" style="min-height:130px">
+        <button type="button" class="btn btn-primary" id="qrStart">🔗 اعرض الباركود</button>
+      </div>
+      <p class="hint center mt-sm">من واتساب: <b>الأجهزة المرتبطة ← ربط جهاز</b>، ثم وجّه الكاميرا للرمز.</p>
+      {% else %}
+      <div class="alert alert-warn">
+        <svg class="ic"><use href="#i-alert"/></svg>
+        <div>هذا الخادم لا يشغّل قناة الباركود (تحتاج متصفّحاً مثبّتاً). استخدم قناة Meta الرسمية — وهي الأنسب للإنتاج على أي حال.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── نص الرسالة ────────────────────────────────────────────────────── #}
+  <div class="card" id="template">
+    <span class="card-title mb"><svg class="ic ic-sm" style="color:var(--brand-500)"><use href="#i-send"/></svg> رسالة تذكير السلة</span>
+
+    <label class="field">
+      <span class="label">النص كما سيصل العميل</span>
+      <textarea name="msg_template" id="tplInput" class="textarea" rows="5"
+                placeholder="{{ defaultTemplate }}">{{ cfg.msg_template }}</textarea>
+      <span class="hint">
+        {% for v in vars %}<code style="background:var(--surface-3); padding:1px 6px; border-radius:5px; margin-inline-end:4px">{{ v.token }}</code>{% endfor %}
+        تُستبدل تلقائياً.
+      </span>
+    </label>
+
+    <div class="mt">
+      <span class="label">معاينة مباشرة</span>
+      <div class="wa-chat">
+        <div class="wa-bubble"><span id="tplBubble"></span>
+          <div class="wa-time">{{ user.merchant.name or "متجرك" }} ✓✓</div>
         </div>
-        <div style="margin-top:14px; background:#0f172a; color:#e2e8f0; border-radius:13px; padding:16px 20px; position:relative">
-            <button type="button" class="btn btn-ghost" style="position:absolute; top:10px; inset-inline-start:10px; padding:5px 12px; font-size:12px"
-                    onclick="navigator.clipboard.writeText(document.getElementById('tplText').innerText).then(function(){ showToast('✓ تم نسخ نص القالب') })">
-                نسخ
-            </button>
-            <pre id="tplText" style="white-space:pre-wrap; font-family:inherit; font-size:14px; line-height:2.1; margin:22px 0 0">مرحباً {{ '{{1}}' }} 👋
+      </div>
+    </div>
+
+    <label class="field">
+      <span class="label">الاسم الظاهر في الرسالة</span>
+      <input name="sender_name" class="input" value="{{ cfg.sender_name }}" placeholder="{{ user.merchant.name or 'اسم متجرك' }}">
+      <span class="hint">اتركه فارغاً لاستخدام اسم متجرك في سلة.</span>
+    </label>
+  </div>
+
+  {# ── القواعد ───────────────────────────────────────────────────────── #}
+  <div class="card">
+    <span class="card-title mb"><svg class="ic ic-sm" style="color:var(--brand-500)"><use href="#i-clock"/></svg> متى وكم نرسل</span>
+
+    <label class="field">
+      <span class="label">أرسل التذكير بعد</span>
+      <select name="delay_minutes" class="select">
+        {% for opt in [[30,"٣٠ دقيقة"],[60,"ساعة واحدة (موصى به)"],[120,"ساعتان"],[180,"٣ ساعات"],[360,"٦ ساعات"],[1440,"يوم كامل"]] %}
+        <option value="{{ opt[0] }}" {% if cfg.delay_minutes == opt[0] %}selected{% endif %}>{{ opt[1] }}</option>
+        {% endfor %}
+      </select>
+      <span class="hint">التذكير خلال الساعة الأولى يضاعف فرصة الاستعادة تقريباً.</span>
+    </label>
+
+    <label class="field">
+      <span class="label">ساعات الهدوء (لا إرسال فيها)</span>
+      <input name="quiet_hours" class="input input-ltr" value="{{ cfg.quiet_hours }}" placeholder="22:00-08:00" pattern="\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}">
+      <span class="hint">بتوقيت الرياض. اتركه فارغاً للإرسال في أي وقت. الرسائل المؤجَّلة تُرسل بعد انتهاء الفترة.</span>
+    </label>
+
+    <label class="field">
+      <span class="label">سقف الرسائل اليومي</span>
+      <input type="number" name="daily_cap" class="input" min="0" max="5000" value="{{ cfg.daily_cap }}">
+      <span class="hint">حماية من الحظر ومن فاتورة Meta المفاجئة. ٠ = بلا سقف.</span>
+    </label>
+
+    <div class="card mt" style="background:var(--surface-2); box-shadow:none">
+      <label class="switch" style="width:100%">
+        <input type="checkbox" name="auto_enabled" {% if cfg.auto_enabled %}checked{% endif %}>
+        <span class="switch-track"></span>
+        <span>
+          <b class="small">تفعيل الإرسال التلقائي</b>
+          <div class="xsmall muted">بدونه لن يُرسل شيء تلقائياً — ستحتاج الضغط يدوياً على كل سلة.</div>
+        </span>
+      </label>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block mt">
+      <svg class="ic ic-sm"><use href="#i-check-plain"/></svg> حفظ الإعدادات
+    </button>
+  </div>
+
+  {# ── دليل Meta ─────────────────────────────────────────────────────── #}
+  <div class="card" id="metaGuide">
+    <span class="card-title mb"><svg class="ic ic-sm" style="color:var(--info)"><use href="#i-info"/></svg> إعداد Meta (مرة واحدة)</span>
+    <ol style="padding-inline-start:18px; font-size:13px; line-height:2.1; color:var(--text-2)">
+      <li>من <b class="ltr">developers.facebook.com</b> أنشئ تطبيقاً نوع Business وأضف منتج WhatsApp.</li>
+      <li>انسخ <b class="ltr">Phone Number ID</b>، وأنشئ رمزاً دائماً من System Users بصلاحية <b class="ltr">whatsapp_business_messaging</b>.</li>
+      <li>أنشئ قالباً باسم <b class="ltr">cart_reminder</b> بالفئة Marketing واللغة العربية، بهذا النص:</li>
+    </ol>
+    <div style="position:relative; background:#0f172a; color:#e2e8f0; border-radius:var(--r); padding:18px 20px; margin-top:12px">
+      <button type="button" class="btn btn-ghost btn-sm" id="copyTpl" style="position:absolute; top:10px; inset-inline-start:10px">نسخ</button>
+      <pre id="tplText" style="white-space:pre-wrap; font-family:inherit; font-size:13.5px; line-height:2.1; margin-top:20px">مرحباً {{ '{{1}}' }} 👋
 لاحظنا أنك تركت بعض المنتجات في سلتك بمتجر {{ '{{2}}' }} 😊
 أكمل طلبك الآن من هنا:
 {{ '{{3}}' }}</pre>
-        </div>
     </div>
+    <p class="hint">ترتيب المتغيّرات مهم: اسم العميل، اسم المتجر، رابط السلة.</p>
+  </div>
+
+  {# ── رسالة تجريبية ─────────────────────────────────────────────────── #}
+  <div class="card" style="grid-column:1/-1">
+    <span class="card-title mb"><svg class="ic ic-sm" style="color:var(--brand-500)"><use href="#i-zap"/></svg> جرّبها على رقمك</span>
+    <p class="muted small mb">أدخل رقمك بصيغة دولية وستصلك نفس الرسالة التي سيراها عميلك — أفضل طريقة للتأكد أن كل شيء يعمل.</p>
+    <div class="row gap-sm wrap">
+      <input id="testPhone" class="input input-ltr" style="max-width:220px" placeholder="9665xxxxxxxx">
+      <button type="button" class="btn btn-wa" id="testSendBtn">
+        <svg class="ic-f ic-sm"><use href="#i-wa"/></svg> أرسل رسالة تجريبية
+      </button>
+      <span id="testSendRes" class="small"></span>
+    </div>
+  </div>
 
 </div>
+</form>
 
-<script>
-{% if saved %}showToast("✓ تم حفظ إعداداتك بنجاح");{% endif %}
-{% if ran > 0 %}setTimeout(function(){ showToast("🚀 تم إرسال {{ ran }} تذكير بنجاح"); }, 400);{% endif %}
+{% endblock %}
 
-/* ===== معاينة الفقاعة ===== */
-var TPL_STORE = "{{ (user.merchant.name or "متجرك")|replace('"',"") }}";
-function updateTplBubble() {
-  var v = document.getElementById("tplInput").value || document.getElementById("tplInput").placeholder;
-  var sample = v
+{% block scripts %}
+<script nonce="{{ nonce }}">
+var STORE = {{ (user.merchant.name or "متجرك") | dump | safe }};
+
+/* ── المعاينة ── */
+function updateBubble() {
+  var input = document.getElementById("tplInput");
+  var text = input.value || input.placeholder;
+  document.getElementById("tplBubble").textContent = text
     .replace(/\[الاسم\]/g, "أحمد")
-    .replace(/\[المتجر\]/g, TPL_STORE)
-    .replace(/\[الرابط\]/g, "https://demostore.salla.sa/cart/abc123");
-  document.getElementById("tplBubble").textContent = sample;
+    .replace(/\[المتجر\]/g, STORE)
+    .replace(/\[المبلغ\]/g, "240")
+    .replace(/\[رقم الطلب\]/g, "12345")
+    .replace(/\[الرابط\]/g, "https://store.salla.sa/cart/abc123");
 }
-updateTplBubble();
+document.getElementById("tplInput").addEventListener("input", updateBubble);
+updateBubble();
 
-/* ===== التبويبات ===== */
-var curChannel = "{{ cfg.channel or "cloud" }}";
-function switchTab(ch) {
-  curChannel = ch;
-  document.getElementById("channelInput").value = ch;
-  document.getElementById("paneWweb").style.display = ch === "wweb" ? "block" : "none";
-  document.getElementById("paneCloud").style.display = ch === "cloud" ? "block" : "none";
-  document.getElementById("metaGuide").style.display = ch === "cloud" ? "block" : "none";
-  document.getElementById("tabWweb").classList.toggle("active", ch === "wweb");
-  document.getElementById("tabCloud").classList.toggle("active", ch === "cloud");
-  if (ch === "wweb") pollQr();
+/* ── تبديل القناة ── */
+function switchChannel(chan) {
+  document.getElementById("channelInput").value = chan;
+  document.getElementById("paneCloud").classList.toggle("hide", chan !== "cloud");
+  document.getElementById("paneWweb").classList.toggle("hide", chan !== "wweb");
+  document.getElementById("metaGuide").classList.toggle("hide", chan !== "cloud");
+  document.getElementById("tabCloud").classList.toggle("active", chan === "cloud");
+  document.getElementById("tabWweb").classList.toggle("active", chan === "wweb");
+  if (chan === "wweb") pollQr(false);
 }
-switchTab(curChannel);
+document.querySelectorAll("[data-chan]").forEach(function (tab) {
+  tab.addEventListener("click", function () { switchChannel(tab.dataset.chan); });
+});
+switchChannel({{ cfg.channel | dump | safe }});
 
-/* ===== باركود واتساب ===== */
-var qrTimer = null;
-async function connectQr(btn) {
-  btn.disabled = true; btn.textContent = "⏳ جاري تجهيز الباركود…";
-  await fetch("/wa/connect", { method: "POST" });
-  btn.disabled = false; btn.textContent = "🔗 اتصال — أظهر الباركود";
-  renderQr({ status: "initializing" });
-  pollQr(true);
-}
-async function pollQr(loop) {
-  try {
-    var r = await fetch("/wa/status");
-    var st = await r.json();
-    renderQr(st);
-    clearTimeout(qrTimer);
-    if (loop && st.status !== "ready") qrTimer = setTimeout(function(){ pollQr(true); }, 2500);
-  } catch (e) {}
-}
-function renderQr(st) {
-  var area = document.getElementById("qrArea");
-  if (st.status === "qr" && st.qr) {
-    area.innerHTML = '<img src="' + st.qr + '" style="border:8px solid #fff; border-radius:18px; box-shadow:var(--sh-md)" width="240">' +
-      '<div style="margin-top:10px; font-size:13px; font-weight:700">📱 امسح الرمز من واتساب بزنس ← الأجهزة المرتبطة</div>';
-  } else if (st.status === "initializing" || st.status === "authenticating") {
-    area.innerHTML = '<div style="padding:26px; color:var(--muted); font-size:14px; font-weight:700">⏳ ' +
-      (st.status === "initializing" ? "جاري فتح المتصفح الآمن…" : "جاري المصادقة…") + "</div>";
-    clearTimeout(qrTimer); qrTimer = setTimeout(function(){ pollQr(true); }, 2500);
-  } else if (st.status === "ready") {
-    area.innerHTML = '<div style="display:inline-flex; align-items:center; gap:9px; background:#ecfdf5; border:1.5px solid #a7f3d0; color:#047857; border-radius:13px; padding:13px 20px; font-weight:800">' +
-      '✅ متصل بواتساب' + (st.phone ? ' — <span dir="ltr">+' + st.phone + "</span>" : "") + "</div>" +
-      '<div style="display:flex; gap:9px; justify-content:center; margin-top:12px; flex-wrap:wrap">' +
-      '<input id="tPhone" dir="ltr" placeholder="9665xxxxxxxx" style="border:1.5px solid var(--border); border-radius:10px; padding:9px 12px; font-family:inherit; width:150px">' +
-      '<button type="button" class="btn btn-ghost" onclick="testSend()">إرسال رسالة تجريبية</button>' +
-      '<button type="button" class="btn btn-ghost" style="color:#dc2626" onclick="disconnectQr()">قطع الاتصال</button></div>' +
-      '<div id="tRes" style="margin-top:9px; font-size:13px"></div>';
-    showToast("✅ واتساب متصل الآن!");
-  } else if (st.status === "disconnected") {
-    area.innerHTML = '<button type="button" class="btn btn-primary" onclick="connectQr(this)" style="padding:13px 30px">🔗 اتصال — أظهر الباركود</button>';
-  } else {
-    area.innerHTML = '<div style="color:#dc2626; font-size:13.5px; padding:14px">حدث خلل (' + st.status + ") — جرّب إعادة الاتصال</div>";
-  }
-}
-async function disconnectQr() {
-  await fetch("/wa/disconnect", { method: "POST" });
-  renderQr({ status: "disconnected" });
-  showToast("تم قطع الاتصال");
-}
-async function testSend() {
-  var p = document.getElementById("tPhone").value.trim();
-  var box = document.getElementById("tRes");
-  if (!p) { box.style.color = "#dc2626"; box.textContent = "أدخل رقمك الشخصي أولاً"; return; }
-  box.textContent = "⏳ …";
-  var r = await fetch("/wa/testsend", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ phone: p }) });
-  var j = await r.json();
-  box.style.color = j.ok ? "#059669" : "#dc2626";
-  box.textContent = j.ok ? "✅ وصلتك الرسالة؟ كل شيء يعمل!" : "❌ " + (j.error || "");
-}
-
-/* ===== اختبار Meta ===== */
-async function testConn(btn) {
-  var f = document.getElementById("cfgForm");
-  var box = document.getElementById("testResult");
-  box.style.display = "block"; box.style.background = "#eff6ff"; box.style.border = "1px solid #bfdbfe"; box.style.color = "#1e40af";
-  box.textContent = "⏳ جاري الاتصال بسيرفرات Meta…";
+/* ── اختبار Meta ── */
+document.getElementById("testBtn").addEventListener("click", function () {
+  var btn = this, box = document.getElementById("testResult");
   btn.disabled = true;
-  try {
-    var body = new URLSearchParams(new FormData(f));
-    var r = await fetch("/settings/test", { method: "POST", body: body });
-    var j = await r.json();
-    if (j.ok) {
-      box.style.background = "#ecfdf5"; box.style.border = "1px solid #a7f3d0"; box.style.color = "#047857";
-      box.innerHTML = "✅ الاتصال ناجح! الرقم: <b dir='ltr'>" + (j.phone || "") + "</b>" + (j.name ? " — " + j.name : "");
-    } else {
-      box.style.background = "#fef2f2"; box.style.border = "1px solid #fecaca"; box.style.color = "#991b1b";
-      box.textContent = "❌ فشل: " + (j.error || "");
-    }
-  } catch (e) { box.textContent = "❌ " + e.message; }
-  btn.disabled = false;
+  box.className = "alert alert-info mt";
+  box.textContent = "⏳ جارٍ الاتصال بسيرفرات Meta…";
+  var form = document.getElementById("cfgForm");
+  fetch("/settings/test", { method: "POST", body: new URLSearchParams(new FormData(form)) })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      if (res.ok) {
+        box.className = "alert alert-ok mt";
+        box.innerHTML = "✅ الاتصال ناجح — الرقم <b class='ltr'>" + (res.phone || "") + "</b>" + (res.name ? " · " + res.name : "");
+      } else {
+        box.className = "alert alert-danger mt";
+        box.textContent = "❌ " + (res.error || "فشل الاتصال");
+      }
+      btn.disabled = false;
+    })
+    .catch(function () { box.className = "alert alert-danger mt"; box.textContent = "❌ تعذّر الاتصال"; btn.disabled = false; });
+});
+
+/* ── رسالة تجريبية ── */
+document.getElementById("testSendBtn").addEventListener("click", function () {
+  var btn = this, out = document.getElementById("testSendRes");
+  var phone = document.getElementById("testPhone").value.trim();
+  if (!phone) { out.style.color = "var(--danger)"; out.textContent = "أدخل رقمك أولاً"; return; }
+  btn.disabled = true; out.style.color = "var(--muted)"; out.textContent = "⏳ جارٍ الإرسال…";
+  postJSON("/settings/testsend", { phone: phone }).then(function (res) {
+    out.style.color = res.ok ? "var(--ok)" : "var(--danger)";
+    out.textContent = res.ok ? "✅ أُرسلت — تفقّد واتساب" : "❌ " + (res.error || "فشل الإرسال");
+    btn.disabled = false;
+  });
+});
+
+/* ── نسخ نص القالب ── */
+document.getElementById("copyTpl").addEventListener("click", function () {
+  copyText(document.getElementById("tplText").innerText, "✓ نُسخ نص القالب");
+});
+
+/* ── الباركود ── */
+var qrTimer = null;
+function renderQr(state) {
+  var area = document.getElementById("qrArea");
+  if (!area) return;
+  if (state.status === "qr" && state.qr) {
+    area.innerHTML = '<img src="' + state.qr + '" width="230" style="margin:0 auto; border:8px solid #fff; border-radius:18px; box-shadow:var(--sh-2)">' +
+      '<div class="small strong mt-sm">📱 امسح الرمز من واتساب ← الأجهزة المرتبطة</div>';
+    schedule();
+  } else if (state.status === "initializing" || state.status === "authenticating") {
+    area.innerHTML = '<div class="muted small" style="padding:34px">⏳ ' +
+      (state.status === "initializing" ? "جارٍ تجهيز الجلسة…" : "جارٍ المصادقة…") + "</div>";
+    schedule();
+  } else if (state.status === "ready") {
+    area.innerHTML = '<div class="alert alert-ok" style="justify-content:center">✅ متصل' +
+      (state.phone ? ' — <span class="ltr">+' + state.phone + "</span>" : "") + "</div>" +
+      '<button type="button" class="btn btn-ghost btn-sm mt" id="qrOff">قطع الاتصال</button>';
+    var off = document.getElementById("qrOff");
+    if (off) off.addEventListener("click", function () {
+      postJSON("/wa/disconnect", {}).then(function () { renderQr({ status: "disconnected" }); showToast("تم قطع الاتصال"); });
+    });
+  } else if (state.status === "unavailable") {
+    area.innerHTML = '<div class="alert alert-warn">' + (state.error || "القناة غير متاحة") + "</div>";
+  } else {
+    area.innerHTML = '<button type="button" class="btn btn-primary" id="qrStart2">🔗 اعرض الباركود</button>';
+    var again = document.getElementById("qrStart2");
+    if (again) again.addEventListener("click", startQr);
+  }
+  function schedule() { clearTimeout(qrTimer); qrTimer = setTimeout(function () { pollQr(true); }, 2500); }
 }
+function pollQr(loop) {
+  fetch("/wa/status").then(function (r) { return r.json(); }).then(function (state) {
+    renderQr(state);
+    if (loop && state.status !== "ready") { clearTimeout(qrTimer); qrTimer = setTimeout(function () { pollQr(true); }, 2500); }
+  }).catch(function () {});
+}
+function startQr() {
+  renderQr({ status: "initializing" });
+  postJSON("/wa/connect", {}).then(function (state) { renderQr(state); pollQr(true); });
+}
+var qrStart = document.getElementById("qrStart");
+if (qrStart) qrStart.addEventListener("click", startQr);
 
-/* حالة الباركود عند فتح الصفحة إن كانت هناك جلسة محفوظة */
-pollQr(false);
+{% if saved %}showToast("✓ حُفظت إعداداتك");{% endif %}
+{% if ran %}setTimeout(function(){ showToast("🚀 أُرسل {{ ran }} تذكير"); }, 500);{% endif %}
 </script>
-
 {% endblock %}

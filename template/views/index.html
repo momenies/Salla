@@ -1,66 +1,209 @@
 {% extends 'layout.html' %}
+{% block title %}نظرة عامة · {{ appName }}{% endblock %}
+{% block pagename %}نظرة عامة{% endblock %}
 {% block content %}
 
-<div style="position:relative; overflow:hidden; border-radius:20px; padding:34px 32px; margin-bottom:22px;
-            background:
-              radial-gradient(500px 240px at 88% -30%,rgba(255,255,255,.28),transparent 60%),
-              linear-gradient(135deg,#075e54 0%,#128c7e 55%,#25d366 100%);
-            box-shadow:0 18px 44px -12px rgba(18,140,126,.45)">
-    <svg class="ic" viewBox="0 0 24 24" style="position:absolute; left:-26px; bottom:-38px; width:210px; height:210px; opacity:.13; stroke:#fff; stroke-width:1.2"><use href="#i-cart"/></svg>
-    <h1 style="color:#fff; font-size:25px; font-weight:900; letter-spacing:-.3px; margin-bottom:8px">
-        أهلاً بك، {{ user.name }} 👋
-    </h1>
-    <p style="color:rgba(255,255,255,.85); font-size:14.5px; line-height:1.9; max-width:520px">
-        {% if merchant and merchant.name %}هذه لوحة متجر <b>{{ merchant.name }}</b>. {% endif %}
-        تابع من هنا العملاء الذين كادوا يكملون الشراء… واستعدهم قبل أن ينسوا.
+{# ── ترحيب + الحالة التشغيلية ─────────────────────────────────────────── #}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">أهلاً {{ user.name or "بك" }} 👋</h1>
+    <p class="page-sub">
+      {% if autoEnabled and channel %}
+        الأتمتة تعمل الآن عبر {% if channel == "cloud" %}قناة Meta الرسمية{% else %}واتساب المرتبط{% endif %} — التطبيق يعمل حتى وأنت نائم.
+      {% else %}
+        خطوة واحدة تفصلك عن أول سلة مستعادة.
+      {% endif %}
     </p>
-    <a href="/abandoned" class="btn btn-white" style="margin-top:18px">
-        عرض السلات المتروكة
-        <svg class="ic" style="width:17px;height:17px"><use href="#i-arrow"/></svg>
-    </a>
+  </div>
+  <div class="page-actions">
+    <a href="/abandoned" class="btn btn-ghost"><svg class="ic ic-sm"><use href="#i-bag"/></svg> السلات</a>
+    <a href="/settings" class="btn btn-primary"><svg class="ic ic-sm"><use href="#i-gear"/></svg> الإعدادات</a>
+  </div>
 </div>
 
-<div class="page-title" style="font-size:16px; margin:6px 0 14px">كيف يعمل منقذ السلات؟</div>
+{% if not channel %}
+<div class="alert alert-warn mb">
+  <svg class="ic"><use href="#i-alert"/></svg>
+  <div>
+    <b>الإرسال متوقّف.</b> {{ channelProblem }}
+  </div>
+  <div class="alert-actions"><a href="/settings" class="btn btn-sm btn-ghost">إكمال الربط</a></div>
+</div>
+{% elif not autoEnabled %}
+<div class="alert alert-info mb">
+  <svg class="ic"><use href="#i-info"/></svg>
+  <div><b>القناة جاهزة، لكن الأتمتة متوقفة.</b> فعّلها ليبدأ الإرسال التلقائي فوراً.</div>
+  <div class="alert-actions"><a href="/settings" class="btn btn-sm btn-primary">تفعيل الآن</a></div>
+</div>
+{% endif %}
 
-<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px">
-
-    <div class="card card-hover">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px">
-            <div class="avatar-letter" style="background:linear-gradient(135deg,#fbbf24,#f59e0b); width:42px; height:42px; border-radius:13px">١</div>
-            <svg class="ic" style="width:26px;height:26px;color:#cbd5e1"><use href="#i-clock"/></svg>
-        </div>
-        <b style="font-size:15.5px">عميل يتوقف عن الشراء</b>
-        <p style="color:var(--muted); font-size:13px; line-height:1.8; margin-top:6px">يضيف المنتجات لسلته ثم يغادر دون إتمام الطلب — كما يفعل 70% من المتسوقين.</p>
+{# ── بطاقات المؤشرات ──────────────────────────────────────────────────── #}
+<div class="grid grid-kpi mb">
+  <div class="card kpi">
+    <span class="kpi-accent" style="background:var(--brand-500)"></span>
+    <div class="kpi-top">
+      <span class="kpi-label">إيراد مستعاد</span>
+      <span class="kpi-icon" style="background:var(--ok-bg); color:var(--ok)"><svg class="ic ic-sm"><use href="#i-wallet"/></svg></span>
     </div>
+    <div class="kpi-value" data-kpi="recovered">{{ board.totals.recoveredAmount | money }}</div>
+    <div class="kpi-foot" data-kpi="recoveredNote">{{ board.totals.recovered }} سلة عادت وأصبحت طلباً</div>
+  </div>
 
-    <div class="card card-hover">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px">
-            <div class="avatar-letter" style="background:linear-gradient(135deg,#60a5fa,#3b82f6); width:42px; height:42px; border-radius:13px">٢</div>
-            <svg class="ic" style="width:26px;height:26px;color:#cbd5e1"><use href="#i-zap"/></svg>
-        </div>
-        <b style="font-size:15.5px">يصلك تنبيه تلقائي</b>
-        <p style="color:var(--muted); font-size:13px; line-height:1.8; margin-top:6px">سلة تخبر التطبيق فور اعتماد السلة متروكة، فيظهر العميل في لوحتك مباشرة.</p>
+  <div class="card kpi">
+    <span class="kpi-accent" style="background:var(--warn)"></span>
+    <div class="kpi-top">
+      <span class="kpi-label">قيمة معلّقة</span>
+      <span class="kpi-icon" style="background:var(--warn-bg); color:var(--warn)"><svg class="ic ic-sm"><use href="#i-clock"/></svg></span>
     </div>
+    <div class="kpi-value" data-kpi="pending">{{ board.totals.pendingValue | money }}</div>
+    <div class="kpi-foot" data-kpi="pendingNote">{{ board.counts.new }} سلة تنتظر التذكير</div>
+  </div>
 
-    <div class="card card-hover">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px">
-            <div class="avatar-letter" style="background:linear-gradient(135deg,#34d399,#059669); width:42px; height:42px; border-radius:13px">٣</div>
-            <svg class="ic-f" style="width:26px;height:26px;color:#cbd5e1"><use href="#i-wa"/></svg>
-        </div>
-        <b style="font-size:15.5px">ترسل تذكيراً وتستعيد البيع</b>
-        <p style="color:var(--muted); font-size:13px; line-height:1.8; margin-top:6px">رسالة واتساب جاهزة برابط السلة نفسه — عميل واحد مستعيد قد يعني عشرات الريالات شهرياً.</p>
+  <div class="card kpi">
+    <span class="kpi-accent" style="background:var(--info)"></span>
+    <div class="kpi-top">
+      <span class="kpi-label">نسبة الاستعادة</span>
+      <span class="kpi-icon" style="background:var(--info-bg); color:var(--info)"><svg class="ic ic-sm"><use href="#i-chart"/></svg></span>
     </div>
+    <div class="kpi-value"><span data-kpi="rate">{{ board.totals.recoveryRate }}</span><small>%</small></div>
+    <div class="kpi-foot">من كل سلة تواصلنا معها</div>
+  </div>
 
+  <div class="card kpi">
+    <span class="kpi-accent" style="background:var(--brand-700)"></span>
+    <div class="kpi-top">
+      <span class="kpi-label">رسائل اليوم</span>
+      <span class="kpi-icon" style="background:var(--brand-50); color:var(--brand-700)"><svg class="ic-f ic-sm"><use href="#i-wa"/></svg></span>
+    </div>
+    <div class="kpi-value" data-kpi="today">{{ board.messages.sentToday }}</div>
+    <div class="kpi-foot">
+      {% if board.messages.pending %}{{ board.messages.pending }} في الانتظار{% else %}لا شيء في الانتظار{% endif %}
+      {% if board.messages.failed %} · <span style="color:var(--danger)">{{ board.messages.failed }} فشلت</span>{% endif %}
+    </div>
+  </div>
 </div>
 
-<div class="card" style="margin-top:16px; display:flex; gap:14px; align-items:flex-start; border-right:4px solid #f59e0b; background:linear-gradient(135deg,#fffbeb,#ffffff)">
-    <svg class="ic" style="color:#f59e0b; width:24px;height:24px"><use href="#i-zap"/></svg>
-    <div>
-        <b style="font-size:14.5px">نصيحة الخبراء</b>
-        <p style="color:var(--muted); font-size:13px; line-height:1.8; margin-top:4px">
-            أرسل التذكير خلال الساعة الأولى من ترك السلة — فرص الاستعادة تكون أعلى بمرتين ونصف مقارنة بالتأخير ليوم كامل.
-        </p>
+<div class="grid grid-2 mb">
+
+  {# ── المنحنى ────────────────────────────────────────────────────────── #}
+  <div class="card card-pad-0">
+    <div class="card-head">
+      <span class="card-title"><svg class="ic ic-sm"><use href="#i-chart"/></svg> آخر ٧ أيام</span>
+      <div class="card-actions chart-legend">
+        <span><i class="chart-dot" style="background:var(--brand-500)"></i> سلات</span>
+        <span><i class="chart-dot" style="background:var(--info)"></i> رسائل</span>
+      </div>
     </div>
+    <div style="padding:18px 20px 12px">
+      {# رسم بياني بـ SVG خالص: بلا مكتبة رسوم (٩٠ كيلوبايت موفّرة) #}
+      <svg class="chart" viewBox="0 0 700 180" preserveAspectRatio="none" role="img" aria-label="منحنى السلات والرسائل">
+        {% for line in [0, 45, 90, 135] %}
+        <line x1="0" y1="{{ line }}" x2="700" y2="{{ line }}" stroke="var(--border)" stroke-width="1"/>
+        {% endfor %}
+        {% set colW = 700 / board.series.length %}
+        {% for day in board.series %}
+          {% set x = loop.index0 * colW %}
+          {% set cartH = (day.carts / board.peak) * 130 %}
+          {% set msgH = (day.messages / board.peak) * 130 %}
+          <rect x="{{ x + colW*0.18 }}" y="{{ 140 - cartH }}" width="{{ colW*0.28 }}" height="{{ cartH }}" rx="4" fill="var(--brand-500)" opacity=".9"><title>{{ day.label }}: {{ day.carts }} سلة</title></rect>
+          <rect x="{{ x + colW*0.52 }}" y="{{ 140 - msgH }}" width="{{ colW*0.28 }}" height="{{ msgH }}" rx="4" fill="var(--info)" opacity=".75"><title>{{ day.label }}: {{ day.messages }} رسالة</title></rect>
+          <text x="{{ x + colW/2 }}" y="163" text-anchor="middle" font-size="13" fill="var(--muted)" font-family="Tajawal, sans-serif">{{ day.label }}</text>
+        {% endfor %}
+      </svg>
+    </div>
+  </div>
+
+  {# ── خطوات التهيئة ──────────────────────────────────────────────────── #}
+  <div class="card card-pad-0">
+    <div class="card-head">
+      <span class="card-title"><svg class="ic ic-sm"><use href="#i-sparkle"/></svg> خطوات التشغيل</span>
+      <span class="card-actions pill {% if setup.complete %}pill-recovered{% else %}pill-pending{% endif %}">{{ setup.done }} من {{ setup.total }}</span>
+    </div>
+    <div style="padding:6px 20px 18px">
+      {% for step in setup.steps %}
+      <div class="row" style="padding:12px 0; border-bottom:1px solid var(--border)">
+        <span class="avatar avatar-sq" style="width:30px;height:30px;font-size:13px;background:{% if step.done %}var(--ok){% else %}var(--surface-3){% endif %};color:{% if step.done %}#fff{% else %}var(--muted){% endif %}">
+          {% if step.done %}✓{% else %}{{ loop.index }}{% endif %}
+        </span>
+        <div style="flex:1; min-width:0">
+          <b class="small" style="{% if step.done %}opacity:.55{% endif %}">{{ step.title }}</b>
+          <div class="xsmall muted" style="{% if step.done %}opacity:.7{% endif %}">{{ step.desc }}</div>
+        </div>
+        {% if not step.done %}
+        <a href="{{ step.href }}" class="btn btn-ghost btn-sm">{{ step.cta }}</a>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% if setup.complete %}
+      <div class="alert alert-ok" style="margin-top:14px">
+        <svg class="ic ic-sm"><use href="#i-check-plain"/></svg>
+        <div>كل شيء جاهز — التطبيق يعمل تلقائياً الآن 🎉</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 
+{# ── آخر السلات ───────────────────────────────────────────────────────── #}
+<div class="card card-pad-0">
+  <div class="card-head">
+    <span class="card-title"><svg class="ic ic-sm"><use href="#i-bag"/></svg> أحدث السلات المتروكة</span>
+    <div class="card-actions"><a href="/abandoned" class="btn btn-ghost btn-sm">عرض الكل <svg class="ic ic-sm"><use href="#i-arrow"/></svg></a></div>
+  </div>
+
+  {% if carts.length %}
+  <div class="table-wrap">
+    <table class="tbl">
+      <thead><tr><th>العميل</th><th>القيمة</th><th>المنتجات</th><th>الحالة</th><th>منذ</th></tr></thead>
+      <tbody>
+      {% for cart in carts %}
+        <tr>
+          <td class="td-strong">{{ cart.customer_name or "عميل بلا اسم" }}<div class="td-dim ltr">{{ cart.customer_mobile or "—" }}</div></td>
+          <td class="td-num">{{ cart.amount_label }}</td>
+          <td class="td-dim">{{ cart.items_count or 0 }}</td>
+          <td>
+            <span class="pill pill-{{ cart.status }}">
+              {% if cart.status == "new" %}جديدة{% elif cart.status == "contacted" %}تم التواصل{% elif cart.status == "recovered" %}مستعادة{% else %}متجاهلة{% endif %}
+            </span>
+          </td>
+          <td class="td-dim">{{ cart.time_ago }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty">
+    <div class="empty-art"><svg class="ic" style="width:34px;height:34px"><use href="#i-bag"/></svg></div>
+    <h3>لا توجد سلات متروكة بعد</h3>
+    <p>سلة تُخبر التطبيق فور اعتماد أي سلة كمتروكة، فتظهر هنا مباشرة. إن كان متجرك يعمل منذ فترة، استورد سلاتك السابقة بضغطة.</p>
+    <a href="/abandoned" class="btn btn-primary"><svg class="ic ic-sm"><use href="#i-download"/></svg> استيراد السلات السابقة</a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ nonce }}">
+/* لوحة حيّة: نداء JSON صغير كل دقيقة بدل إعادة تحميل الصفحة كاملة.
+   يتوقّف حين يترك التاجر التبويب — لا فائدة من تحديث لا يراه أحد. */
+(function () {
+  function refresh() {
+    if (document.hidden) return;
+    fetch("/api/stats", { headers: { Accept: "application/json" } })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok || !data.cards) return;
+        Object.keys(data.cards).forEach(function (key) {
+          var el = document.querySelector('[data-kpi="' + key + '"]');
+          if (el && el.textContent !== data.cards[key]) el.textContent = data.cards[key];
+        });
+      })
+      .catch(function () { /* انقطاع مؤقت — نحاول في الدورة القادمة */ });
+  }
+  setInterval(refresh, 60000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(); });
+})();
+</script>
 {% endblock %}

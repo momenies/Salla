@@ -10,17 +10,18 @@
  */
 const SallaDatabase = require("./salla-db");
 const { matchFeatures, FEATURES, BUNDLE } = require("../config/features");
+const env = require("../config/env");
+const log = require("../lib/logger");
 
 /**
  * هل وضع "افتح كل الميزات" مفعّل؟
  * يُتجاهل في الإنتاج مهما كانت قيمة المتغيّر.
  */
 function unlockAllEnabled() {
-  const on = ["1", "true", "yes"].includes(String(process.env.UNLOCK_ALL_FEATURES || "").toLowerCase());
-  if (!on) return false;
-  if (process.env.NODE_ENV === "production") {
+  if (!env.unlockAll) return false;
+  if (env.isProd) {
     if (!unlockAllEnabled._warned) {
-      console.error("⛔ UNLOCK_ALL_FEATURES مفعّل لكن البيئة إنتاج — تم تجاهله. احذفه من .env.");
+      log.error("UNLOCK_ALL_FEATURES مفعّل لكن البيئة إنتاج — تم تجاهله. احذفه من متغيّرات البيئة.");
       unlockAllEnabled._warned = true;
     }
     return false;
@@ -82,7 +83,7 @@ async function handleSubscriptionEvent(eventBody) {
 
   if (!eventName || !isSubscriptionEvent(eventName)) return null;
   if (!merchant) {
-    console.warn(`اشتراك: حدث ${eventName} بلا معرّف متجر — تُجوهل.`);
+    log.warn(`اشتراك: حدث ${eventName} بلا معرّف متجر — تُجوهل.`);
     return { event: eventName, ok: false, reason: "لا يوجد معرّف متجر" };
   }
 
@@ -110,7 +111,7 @@ async function handleSubscriptionEvent(eventBody) {
       closed = { all: false, keys: targets };
     }
 
-    console.log(`اشتراك: ${eventName} للمتجر ${merchant} → قفل`, JSON.stringify(closed));
+    log.info(`اشتراك: ${eventName} للمتجر ${merchant} → قفل`, { closed });
     return { event: eventName, merchant, action: "revoke", status, closed };
   }
 
@@ -128,7 +129,7 @@ async function handleSubscriptionEvent(eventBody) {
     });
     await SallaDatabase.revokeFeature(merchant, "__unmatched__", "expired");
 
-    console.warn(
+    log.warn(
       `اشتراك: ${eventName} للمتجر ${merchant} — لم نتعرّف على الإضافة "${plan_label || "?"}". ` +
       `افتح صفحة /plans وانسخ المعرّف إلى addonMatch في config/features.js`
     );
@@ -139,7 +140,7 @@ async function handleSubscriptionEvent(eventBody) {
     await SallaDatabase.grantFeature(merchant, key, { source, plan_label, expires_at, raw });
   }
 
-  console.log(
+  log.info(
     `اشتراك: ${eventName} للمتجر ${merchant} → فتح ${keys.join("، ")}` +
     (expires_at ? ` حتى ${expires_at.toISOString().slice(0, 10)}` : "")
   );
@@ -163,7 +164,7 @@ async function activeFeatures(merchant) {
   try {
     purchased = await SallaDatabase.activeFeatureKeys(merchant);
   } catch (err) {
-    console.log("تعذّر قراءة الصلاحيات:", err.message);
+    log.warn("تعذّر قراءة الصلاحيات", { error: err.message });
   }
   return new Set([...free, ...purchased.filter((k) => k !== "__unmatched__")]);
 }

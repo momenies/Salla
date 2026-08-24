@@ -3,99 +3,100 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>إعداد مطلوب — الربط مع سلة</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  /* صفحة مستقلة عن layout.html — ذاك يعرض شاشة الدخول للزائر
-     ولا يصل إلى المحتوى، فتضيع هذه التعليمات. */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; }
-  body {
-    font-family: "IBM Plex Sans Arabic", system-ui, sans-serif;
-    background: #f1f5f9; color: #0f172a; line-height: 1.8;
-    padding: 32px 16px;
-  }
-  .wrap { width: min(760px, 100%); margin: 0 auto; display: grid; gap: 16px; }
-  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; }
-  .card--warn { background: #fffbeb; border-color: #fde68a; }
-  h1 { font-size: 22px; font-weight: 700; }
-  .sub { color: #64748b; font-size: 14px; margin-top: 4px; }
-  h2 { font-size: 15.5px; font-weight: 700; }
-  p  { font-size: 13.8px; color: #475569; }
-  ol { margin: 14px 0 0; padding-inline-start: 20px; display: grid; gap: 18px; }
-  li b { font-size: 14.5px; color: #0f172a; }
-  code { direction: ltr; unicode-bidi: isolate; display: inline-block;
-         background: #f1f5f9; padding: 1px 6px; border-radius: 6px; font-size: 12.5px; }
-  pre { direction: ltr; text-align: left; background: #0f172a; color: #e2e8f0;
-        padding: 14px 16px; border-radius: 12px; margin-top: 8px;
-        overflow-x: auto; font-size: 12.5px; line-height: 1.9; }
-  pre code { background: none; padding: 0; color: inherit; }
-  pre .fill { color: #fbbf24; }
-  .url { background: #f1f5f9; color: #0f172a; }
-  .status { display: grid; gap: 8px; margin-top: 12px; font-size: 14px; }
-  a { color: #0d9488; }
-  .back { display: inline-block; margin-top: 4px; font-size: 13.5px; font-weight: 600; }
-</style>
+<title>إعداد التطبيق · منقذ السلات</title>
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/app.css">
 </head>
-<body>
-<div class="wrap">
+<body style="background:var(--bg)">
 
-  <div>
-    <h1>إعداد مطلوب قبل تسجيل الدخول</h1>
-    <div class="sub">التطبيق يعمل، لكن مفاتيح الربط مع سلة غير مضبوطة</div>
+{% include "_icons.html" %}
+
+<div style="max-width:720px; margin:0 auto; padding:48px 20px">
+
+  <div class="row gap-sm mb-lg">
+    <span class="brand-logo"><svg class="ic"><use href="#i-cart"/></svg></span>
+    <div>
+      <b style="font-size:17px">منقذ السلات</b>
+      <div class="xsmall muted">خطوة إعداد واحدة قبل التشغيل</div>
+    </div>
   </div>
 
-  <div class="card card--warn">
-    <h2>لماذا لا يعمل تسجيل الدخول؟</h2>
-    <p style="margin-top:6px">
-      سلة تتعرّف على تطبيقك عبر مفتاحين سرّيين. ملف <code>.env</code> عندك لا يحتوي عليهما،
-      فلو حوّلناك إلى سلة الآن سترفضك برسالة
-      «The requested OAuth 2.0 Client does not exist».
-    </p>
+  <div class="alert alert-warn mb">
+    <svg class="ic"><use href="#i-alert"/></svg>
+    <div>
+      <b>التطبيق يعمل، لكن الربط بسلة غير مكتمل.</b>
+      تسجيل الدخول معطّل حتى تضع مفاتيح التطبيق من بوابة شركاء سلة.
+    </div>
   </div>
 
-  <div class="card">
-    <h2>الخطوات</h2>
-    <ol>
-      <li>
-        <b>افتح بوابة الشركاء</b>
-        <p><a href="https://salla.partners" target="_blank" rel="noopener">salla.partners</a>
-           ← تطبيقاتي ← اختر تطبيقك ← <b>App Keys</b></p>
-      </li>
+  <div class="card mb">
+    <span class="card-title mb">ما ينقص الآن</span>
+    <div class="stack">
+      {% for item in [
+        ["SALLA_OAUTH_CLIENT_ID", hasClientId, "معرّف التطبيق من بوابة الشركاء"],
+        ["SALLA_OAUTH_CLIENT_SECRET", hasClientSecret, "المفتاح السرّي للتطبيق"],
+        ["SALLA_OAUTH_CLIENT_REDIRECT_URI", hasRedirect, "رابط الرجوع بعد تسجيل الدخول"],
+        ["SALLA_WEBHOOK_SECRET", hasWebhook, "سرّ الأحداث (مطلوب لاستقبال السلات المتروكة)"]
+      ] %}
+      <div class="row gap-sm" style="padding:9px 0; border-bottom:1px solid var(--border)">
+        <span class="avatar avatar-sq" style="width:26px;height:26px;font-size:13px;background:{% if item[1] %}var(--ok){% else %}var(--danger-bg){% endif %};color:{% if item[1] %}#fff{% else %}var(--danger){% endif %}">
+          {% if item[1] %}✓{% else %}!{% endif %}
+        </span>
+        <div style="flex:1; min-width:0">
+          <code class="ltr small strong">{{ item[0] }}</code>
+          <div class="xsmall muted">{{ item[2] }}</div>
+        </div>
+        <span class="pill {% if item[1] %}pill-recovered{% else %}pill-failed{% endif %}">{% if item[1] %}موجود{% else %}ناقص{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
 
-      <li>
-        <b>انسخ المفتاحين إلى ملف <code>.env</code></b>
-<pre><code>SALLA_OAUTH_CLIENT_ID=<span class="fill">ضع Client ID هنا</span>
-SALLA_OAUTH_CLIENT_SECRET=<span class="fill">ضع Client Secret هنا</span>
-SALLA_OAUTH_CLIENT_REDIRECT_URI={{ callbackUrl }}</code></pre>
-      </li>
+  <div class="card mb">
+    <span class="card-title mb">الخطوات</span>
+    <ol style="padding-inline-start:20px; line-height:2.2; font-size:13.5px; color:var(--text-2)">
+      <li>افتح <b class="ltr">partners.salla.dev</b> ← تطبيقاتك ← تطبيقك ← <b>مفاتيح التطبيق</b>.</li>
+      <li>انسخ <b class="ltr">Client ID</b> و<b class="ltr">Client Secret</b> إلى ملف <code class="ltr">.env</code>.</li>
+      <li>ضع رابط الرجوع التالي في حقل <b>Callback URL</b> لدى سلة:</li>
+    </ol>
 
-      <li>
-        <b>ضع نفس رابط العودة في البوابة</b>
-        <p>في صفحة التطبيق ← <b>Callback URL</b>، ضعه بالضبط:</p>
-<pre class="url"><code>{{ callbackUrl }}</code></pre>
-        <p style="margin-top:6px">لازم يطابق حرفاً بحرف، وإلا سترفضه سلة.</p>
-      </li>
+    <div class="row gap-sm mt" style="background:var(--surface-3); border-radius:var(--r); padding:12px 14px">
+      <code class="ltr small" id="cb" style="flex:1; overflow:auto">{{ callbackUrl }}</code>
+      <button type="button" class="btn btn-ghost btn-sm" id="copyCb">نسخ</button>
+    </div>
 
-      <li>
-        <b>أعد تشغيل التطبيق</b>
-        <p>أوقفه بـ <code>Ctrl+C</code> ثم <code>npm run dev</code>، وجرّب الدخول من جديد.</p>
-      </li>
+    <ol start="4" style="padding-inline-start:20px; line-height:2.2; font-size:13.5px; color:var(--text-2); margin-top:12px">
+      <li>من تبويب <b>الويبهوك</b> انسخ السرّ إلى <code class="ltr">SALLA_WEBHOOK_SECRET</code>.</li>
+      <li>أعد تشغيل التطبيق، ثم اضغط الزر أدناه.</li>
     </ol>
   </div>
 
-  <div class="card">
-    <h2>الحالة الآن</h2>
-    <div class="status">
-      <div>{{ "✅" if hasClientId else "❌" }} <code>SALLA_OAUTH_CLIENT_ID</code></div>
-      <div>{{ "✅" if hasClientSecret else "❌" }} <code>SALLA_OAUTH_CLIENT_SECRET</code></div>
-      <div>
-        {{ "✅" if hasRedirect else "⚠️" }} <code>SALLA_OAUTH_CLIENT_REDIRECT_URI</code>
-        {% if not hasRedirect %}<span style="color:#64748b">— سنستخدم الرابط أعلاه</span>{% endif %}
-      </div>
-    </div>
-    <a class="back" href="/">← العودة للصفحة الرئيسية</a>
+  <div class="card mb" style="background:var(--surface-2)">
+    <span class="card-title mb">مثال ملف <code class="ltr">.env</code></span>
+    <pre class="ltr xsmall" style="background:#0f172a; color:#e2e8f0; padding:16px; border-radius:var(--r); overflow:auto; line-height:1.9; text-align:left">SALLA_OAUTH_CLIENT_ID=xxxxxxxx
+SALLA_OAUTH_CLIENT_SECRET=xxxxxxxx
+SALLA_OAUTH_CLIENT_REDIRECT_URI={{ callbackUrl }}
+SALLA_WEBHOOK_SECRET=xxxxxxxx
+SESSION_SECRET=<span>ولّد نصاً عشوائياً طويلاً</span>
+DATABASE_STORAGE=database.sqlite
+CRON_SECRET=<span>أي نص عشوائي طويل</span></pre>
   </div>
 
+  <a href="/login" class="btn btn-primary btn-lg btn-block">
+    <svg class="ic"><use href="#i-refresh"/></svg> أعدت الضبط — جرّب الدخول
+  </a>
+  <p class="center muted xsmall mt">لن تعمل هذه الصفحة إلا والمفاتيح ناقصة — تختفي تلقائياً بعد الضبط.</p>
 </div>
+
+<div id="toast"></div>
+<script src="/assets/app.js" defer></script>
+<script nonce="{{ nonce }}">
+document.getElementById("copyCb").addEventListener("click", function () {
+  copyText(document.getElementById("cb").textContent.trim(), "✓ نُسخ رابط الرجوع");
+});
+</script>
 </body>
 </html>

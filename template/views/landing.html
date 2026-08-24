@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>منقذ السلات — استعد مبيعاتك الضائعة عبر واتساب</title>
+<meta name="description" content="٧ من كل ١٠ عملاء يتركون سلاتهم دون شراء. منقذ السلات يذكّرهم تلقائياً على واتساب ويعيد البيع — تطبيق سلة يعمل وأنت نائم.">
+<meta property="og:title" content="منقذ السلات — استعد مبيعاتك الضائعة">
+<meta property="og:description" content="تذكير واتساب تلقائي لكل سلة متروكة في متجرك على سلة.">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%2325D366'/><text x='50' y='70' font-size='54' text-anchor='middle'>🛒</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/app.css">
+<style>
+  /* أنماط خاصة بالصفحة التعريفية فقط — لا داعي لتحميلها داخل اللوحة */
+  .hero {
+    position:relative; overflow:hidden; padding:96px 22px 88px; text-align:center; color:#fff;
+    background:
+      radial-gradient(760px 420px at 82% -6%, rgba(37,211,102,.42), transparent 62%),
+      radial-gradient(620px 420px at 10% 100%, rgba(18,140,126,.55), transparent 62%),
+      linear-gradient(165deg,#04291f,#075e54 52%,#0b7a58);
+  }
+  .hero::before {
+    content:""; position:absolute; inset:0; opacity:.5; pointer-events:none;
+    background-image:radial-gradient(rgba(255,255,255,.16) 1px, transparent 1px); background-size:26px 26px;
+  }
+  .hero-inner { position:relative; z-index:2; max-width:820px; margin:0 auto; }
+  .hero h1 { font-size:clamp(30px, 5.4vw, 50px); font-weight:900; letter-spacing:-1.4px; line-height:1.25; margin-bottom:18px; }
+  .hero p.lede { font-size:clamp(15px,2.2vw,18.5px); line-height:2; color:rgba(255,255,255,.9); max-width:640px; margin:0 auto 32px; }
+  .hero-badge {
+    display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.22); backdrop-filter:blur(8px); border-radius:99px;
+    padding:7px 17px; font-size:12.5px; font-weight:700; color:#d9ffe9; margin-bottom:24px;
+  }
+  .hero-cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .hero-note { margin-top:20px; font-size:12.5px; color:rgba(255,255,255,.72); display:flex; gap:7px; justify-content:center; align-items:center; }
+  .proof { display:flex; gap:34px; justify-content:center; flex-wrap:wrap; margin-top:52px; }
+  .proof div { text-align:center; }
+  .proof b { display:block; font-size:32px; font-weight:900; letter-spacing:-1px; color:#7ef0ac; }
+  .proof span { font-size:12.5px; color:rgba(255,255,255,.75); }
+
+  .section { max-width:1120px; margin:0 auto; padding:76px 22px; }
+  .section-head { text-align:center; max-width:640px; margin:0 auto 44px; }
+  .section-head h2 { font-size:clamp(23px,3.4vw,32px); font-weight:900; letter-spacing:-.8px; margin-bottom:12px; }
+  .section-head p { color:var(--muted); font-size:15px; line-height:1.95; }
+  .eyebrow { font-size:12px; font-weight:800; color:var(--brand-600); letter-spacing:.8px; margin-bottom:10px; }
+
+  .step-num {
+    width:44px; height:44px; border-radius:14px; display:grid; place-items:center; color:#fff;
+    font-weight:900; font-size:17px; margin-bottom:16px;
+    background:linear-gradient(140deg,var(--brand-500),var(--brand-700)); box-shadow:var(--sh-brand);
+  }
+  .price-card { position:relative; }
+  .price-card.featured { border-color:var(--brand-500); box-shadow:0 0 0 3px rgba(37,211,102,.16), var(--sh-2); }
+  .price-tag { font-size:30px; font-weight:900; letter-spacing:-1px; }
+  .price-tag small { font-size:13px; font-weight:700; color:var(--muted); }
+  .tick { display:flex; gap:9px; align-items:flex-start; font-size:13.5px; line-height:1.85; padding:5px 0; }
+  .tick svg { color:var(--brand-500); margin-top:4px; flex-shrink:0; }
+  .faq details {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
+    padding:16px 20px; margin-bottom:10px;
+  }
+  .faq summary { font-weight:800; font-size:14.5px; cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:12px; }
+  .faq summary::-webkit-details-marker { display:none; }
+  .faq summary::after { content:"+"; color:var(--brand-600); font-size:20px; line-height:1; }
+  .faq details[open] summary::after { content:"−"; }
+  .faq p { color:var(--muted); font-size:13.5px; line-height:2; margin-top:12px; }
+  .cta-band {
+    background:linear-gradient(140deg,var(--brand-800),var(--brand-600)); color:#fff;
+    border-radius:var(--r-xl); padding:52px 32px; text-align:center; margin:0 22px 76px;
+    max-width:1080px; margin-inline:auto;
+  }
+  .site-foot { border-top:1px solid var(--border); padding:26px 22px; text-align:center; color:var(--muted); font-size:12.5px; }
+</style>
+</head>
+<body>
+
+{% include "_icons.html" %}
+
+<section class="hero">
+  <div class="hero-inner">
+    <span class="hero-badge"><svg class="ic ic-sm"><use href="#i-salla"/></svg> تطبيق معتمد لمتاجر سلة</span>
+    <h1>كل سلة متروكة هي صفقة<br>لم تُفقد بعد</h1>
+    <p class="lede">
+      ٧ من كل ١٠ عملاء يضيفون المنتجات ثم يغادرون. منقذ السلات يذكّرهم برسالة واتساب
+      تلقائية برابط سلتهم نفسها — فيعود جزء منهم ويُكمل الشراء، بلا أي عمل يدوي منك.
+    </p>
+    <div class="hero-cta">
+      <a href="/login" class="btn btn-white btn-lg">
+        <svg class="ic"><use href="#i-salla"/></svg> ابدأ بربط متجرك
+      </a>
+      <a href="#how" class="btn btn-lg" style="background:rgba(255,255,255,.13); color:#fff; border-color:rgba(255,255,255,.25)">
+        كيف يعمل؟
+      </a>
+    </div>
+    <div class="hero-note">
+      <svg class="ic ic-sm"><use href="#i-shield"/></svg>
+      دخول آمن عبر سلة · بلا بطاقة ائتمانية · الميزة الأساسية مجانية
+    </div>
+
+    <div class="proof">
+      <div><b>٧٠٪</b><span>من السلات تُترك دون شراء</span></div>
+      <div><b>×٢٫٥</b><span>فرصة أعلى بالتذكير خلال ساعة</span></div>
+      <div><b>٩٨٪</b><span>معدّل فتح رسائل واتساب</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <div class="section-head">
+    <div class="eyebrow">كيف يعمل</div>
+    <h2>ثلاث خطوات، ثم ينساك التطبيق ويعمل وحده</h2>
+    <p>تربط متجرك مرة واحدة، وتكتب نص الرسالة بصوتك، ثم تتركه. لا جداول، ولا متابعة يدوية.</p>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="card card-hover">
+      <div class="step-num">١</div>
+      <b style="font-size:15.5px">اربط متجرك بسلة</b>
+      <p class="muted small mt-sm" style="line-height:1.95">ضغطة واحدة عبر حسابك في سلة. لا نطلب كلمة مرور، ولا نلمس بيانات عملائك خارج ما يلزم للتذكير.</p>
+    </div>
+    <div class="card card-hover">
+      <div class="step-num">٢</div>
+      <b style="font-size:15.5px">اربط واتساب واكتب رسالتك</b>
+      <p class="muted small mt-sm" style="line-height:1.95">قناة Meta الرسمية للإنتاج، أو ربط سريع بالباركود للتجربة. النص يقبل اسم العميل واسم متجرك ورابط السلة تلقائياً.</p>
+    </div>
+    <div class="card card-hover">
+      <div class="step-num">٣</div>
+      <b style="font-size:15.5px">شاهد المبيعات تعود</b>
+      <p class="muted small mt-sm" style="line-height:1.95">لوحة تعرض الإيراد المستعاد فعلياً بالريال، ونسبة الاستعادة، وسجلّ كل رسالة أُرسلت.</p>
+    </div>
+  </div>
+
+  {# معاينة الرسالة — أقوى من أي وصف نصي #}
+  <div class="grid grid-2 mt-lg">
+    <div class="card">
+      <span class="card-title mb"><svg class="ic-f ic-sm" style="color:var(--brand-500)"><use href="#i-wa"/></svg> هكذا تصل الرسالة لعميلك</span>
+      <div class="wa-chat">
+        <div class="wa-bubble">مرحباً أحمد 👋
+لاحظنا أنك تركت بعض المنتجات في سلتك بمتجر «متجر النخبة» 😊
+أكمل طلبك الآن من هنا:
+https://store.salla.sa/cart/a1b2c3
+          <div class="wa-time">١٠:٤٢ ✓✓</div>
+        </div>
+      </div>
+      <p class="muted xsmall mt-sm">النص كله قابل للتعديل — والمعاينة تتحدّث أمامك أثناء الكتابة.</p>
+    </div>
+
+    <div class="card">
+      <span class="card-title mb"><svg class="ic ic-sm" style="color:var(--brand-500)"><use href="#i-zap"/></svg> أتمتة تغطي رحلة الطلب كاملة</span>
+      <div class="stack" style="gap:9px">
+        {% for scenario in scenarios %}
+        <div class="row gap-sm">
+          <span class="avatar avatar-sq" style="width:32px;height:32px;background:var(--brand-50);color:var(--brand-700)">
+            <svg class="ic ic-sm"><use href="#{{ scenario.icon }}"/></svg>
+          </span>
+          <div style="min-width:0">
+            <b class="small">{{ scenario.label }}</b>
+            <div class="xsmall muted truncate">{{ scenario.desc }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background:var(--bg-soft); max-width:none">
+  <div style="max-width:1120px; margin:0 auto">
+    <div class="section-head">
+      <div class="eyebrow">الأسعار</div>
+      <h2>ابدأ مجاناً، وادفع فقط حين تحتاج المزيد</h2>
+      <p>أتمتة السلات المتروكة — قلب التطبيق — مجانية بالكامل. الميزات الإضافية تُشترى من داخل سلة.</p>
+    </div>
+
+    <div class="grid grid-3">
+      {% for feature in features %}
+      <div class="card price-card {% if feature.free %}featured{% endif %}">
+        {% if feature.free %}<span class="pill pill-brand mb-sm">الأكثر استخداماً</span>{% endif %}
+        <b style="font-size:16px">{{ feature.name }}</b>
+        <p class="muted small mt-sm" style="min-height:52px; line-height:1.9">{{ feature.description }}</p>
+        <div class="price-tag mt">
+          {% if feature.free %}مجاناً{% else %}{{ feature.price }}{% endif %}
+        </div>
+        <a href="/login" class="btn {% if feature.free %}btn-primary{% else %}btn-outline{% endif %} btn-block mt">
+          {% if feature.free %}ابدأ الآن{% else %}اشترك من سلة{% endif %}
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card mt" style="border-color:var(--brand-500)">
+      <div class="row-between wrap">
+        <div>
+          <b style="font-size:16px">{{ bundle.name }}</b>
+          <p class="muted small mt-sm">{{ bundle.description }}</p>
+        </div>
+        <div class="row gap-lg">
+          <div class="price-tag">{{ bundle.price }}</div>
+          <a href="/login" class="btn btn-primary">اشترك الآن</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section faq">
+  <div class="section-head">
+    <div class="eyebrow">أسئلة شائعة</div>
+    <h2>ما يسأل عنه التجار قبل التثبيت</h2>
+  </div>
+
+  <details open>
+    <summary>هل أحتاج حساب واتساب بزنس؟</summary>
+    <p>للإنتاج، نعم — قناة Meta الرسمية تتطلّب حساب WhatsApp Business API، وهي الطريقة المضمونة التي لا يُحظر فيها رقمك. للتجربة السريعة يمكنك ربط رقمك الحالي عبر الباركود خلال دقيقة.</p>
+  </details>
+  <details>
+    <summary>هل ترسلون رسائل مزعجة لعملائي؟</summary>
+    <p>لا. تحدّد أنت المهلة قبل التذكير، وساعات هدوء لا نرسل فيها إطلاقاً، وسقفاً يومياً للرسائل. وأي عميل يُكمل طلبه تُلغى رسائله المعلّقة تلقائياً.</p>
+  </details>
+  <details>
+    <summary>ماذا عن سلاتي القديمة قبل التثبيت؟</summary>
+    <p>سلة ترسل الأحداث الجديدة فقط، لذلك أضفنا زر «استيراد السلات السابقة» يسحب ما لدى سلة من سلات متروكة قائمة ليبدأ العمل من أول يوم.</p>
+  </details>
+  <details>
+    <summary>أين تُحفظ بيانات عملائي؟</summary>
+    <p>في قاعدة بيانات تطبيقك أنت. لا نبيع البيانات ولا نشاركها، وعند إزالة التطبيق تُقطع الصلاحيات ويُحذف رمز الوصول فوراً.</p>
+  </details>
+  <details>
+    <summary>هل يعمل مع أي قالب أو خطة في سلة؟</summary>
+    <p>نعم. التطبيق يعمل على مستوى الحساب لا القالب، ويستقبل الأحداث من سلة مباشرة، فلا يتأثر بتصميم متجرك.</p>
+  </details>
+</section>
+
+<div class="cta-band">
+  <h2 style="font-size:clamp(22px,3.4vw,30px); font-weight:900; letter-spacing:-.8px; margin-bottom:12px">
+    كل يوم بلا تذكير = سلات تُنسى للأبد
+  </h2>
+  <p style="color:rgba(255,255,255,.85); font-size:15px; line-height:1.95; max-width:520px; margin:0 auto 26px">
+    الربط يستغرق دقيقة واحدة، والميزة الأساسية مجانية. جرّبها على متجرك اليوم.
+  </p>
+  <a href="/login" class="btn btn-white btn-lg"><svg class="ic"><use href="#i-salla"/></svg> ربط متجري الآن</a>
+</div>
+
+<footer class="site-foot">
+  {{ appName }} © {{ year }} · صُنع لمتاجر سلة 🇸🇦 ·
+  <a href="/login" style="text-decoration:underline">تسجيل الدخول</a>
+</footer>
+
+<script src="/assets/app.js" defer></script>
+</body>
+</html>

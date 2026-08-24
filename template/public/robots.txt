@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /$
+Disallow: /abandoned
+Disallow: /automations
+Disallow: /settings
+Disallow: /orders
+Disallow: /customers
+Disallow: /invoices
+Disallow: /account
+Disallow: /internal
+Disallow: /webhook

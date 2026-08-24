@@ -1,59 +1,70 @@
 {% extends 'layout.html' %}
+{% block title %}الفواتير · {{ appName }}{% endblock %}
+{% block pagename %}الفواتير{% endblock %}
 {% block content %}
 
-<div style="margin-bottom:22px">
-    <div class="page-title">الفواتير</div>
-    <div class="page-sub">افتح فاتورة أي طلب واطبعها أو احفظها PDF وأرسلها للعميل</div>
+<div class="page-head">
+  <div>
+    <h1 class="page-title">الفواتير</h1>
+    <p class="page-sub">فاتورة جاهزة للطباعة أو الحفظ PDF لكل طلب، ببيانات متجرك.</p>
+  </div>
 </div>
 
 {% if error %}
-<div class="card" style="padding:18px 20px; margin-bottom:16px; border:1px solid #fecaca; background:#fef2f2">
-    <b style="font-size:14.5px; color:#b91c1c">{{ error }}</b>
-</div>
+<div class="alert alert-danger mb"><svg class="ic"><use href="#i-alert"/></svg><div>{{ error }}</div></div>
 {% endif %}
 
-{% if orders and orders.length %}
-<div class="card" style="padding:0; overflow:hidden">
-    <table style="width:100%; border-collapse:collapse; font-size:14px">
-        <thead>
-            <tr style="background:#f8fafc; text-align:right">
-                <th style="padding:13px 18px; font-size:12.5px; color:var(--muted); font-weight:700">رقم الطلب</th>
-                <th style="padding:13px 18px; font-size:12.5px; color:var(--muted); font-weight:700">العميل</th>
-                <th style="padding:13px 18px; font-size:12.5px; color:var(--muted); font-weight:700">الإجمالي</th>
-                <th style="padding:13px 18px; font-size:12.5px; color:var(--muted); font-weight:700">الحالة</th>
-                <th style="padding:13px 18px"></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for o in orders %}
-            <tr style="border-top:1px solid #f1f5f9">
-                <td style="padding:14px 18px; font-weight:700">#{{ o.reference_id or o.id }}</td>
-                <td style="padding:14px 18px">{{ o.customer.first_name }} {{ o.customer.last_name }}</td>
-                <td style="padding:14px 18px; font-weight:700; white-space:nowrap">
-                    {{ o.total.amount }} <span style="font-size:12px; color:var(--muted)">{{ o.total.currency }}</span>
-                </td>
-                <td style="padding:14px 18px"><span class="pill pill-new">{{ o.status.name }}</span></td>
-                <td style="padding:14px 18px; text-align:left">
-                    <a class="btn btn-ghost" href="/invoices/{{ o.id }}" target="_blank" rel="noopener">فتح الفاتورة</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="alert alert-info mb">
+  <svg class="ic"><use href="#i-info"/></svg>
+  <div>هذه فاتورة/إيصال للعميل، وليست فاتورة ضريبية معتمدة من هيئة الزكاة والضريبة — تلك يصدرها نظام متجرك.</div>
 </div>
-{% elif not error %}
-<div class="card" style="padding:48px 24px; text-align:center">
-    <b style="font-size:16px; display:block; margin-bottom:6px">لا توجد طلبات بعد</b>
-    <div style="font-size:13.5px; color:var(--muted)">أول طلب يصل متجرك ستقدر تصدر له فاتورة من هنا.</div>
-</div>
-{% endif %}
 
-<div class="card" style="padding:18px 20px; margin-top:16px; background:#fffbeb; border:1px solid #fde68a">
-    <b style="font-size:13.5px">ملاحظة نظامية</b>
-    <div style="font-size:12.5px; color:var(--muted); margin-top:5px; line-height:1.8">
-        هذه فاتورة/إيصال للعميل، وليست فاتورة ضريبية إلكترونية معتمدة من هيئة الزكاة
-        والضريبة والجمارك. الفوترة الإلكترونية المعتمدة (فاتورة) تصدر من نظام متجرك نفسه.
+<div class="card card-pad-0">
+  <div class="card-head">
+    <span class="card-title"><svg class="ic ic-sm"><use href="#i-wallet"/></svg> اختر طلباً</span>
+    <div class="card-actions">
+      <span class="search-box">
+        <svg class="ic ic-sm"><use href="#i-search"/></svg>
+        <input type="search" placeholder="تصفية…" data-filter-target="#invBody tr" aria-label="تصفية">
+      </span>
     </div>
+  </div>
+
+  {% if orders.length %}
+  <div class="table-wrap">
+    <table class="tbl">
+      <thead><tr><th>رقم الطلب</th><th>العميل</th><th>الإجمالي</th><th>التاريخ</th><th></th></tr></thead>
+      <tbody id="invBody">
+      {% for order in orders %}
+        <tr>
+          <td class="td-strong ltr">#{{ order.reference_id or order.id }}</td>
+          <td>{{ order.customer_label }}</td>
+          <td class="td-num">{{ order.amount_label }}</td>
+          <td class="td-dim">{{ order.date_label }}</td>
+          <td>
+            <a href="/invoices/{{ order.id }}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
+              <svg class="ic ic-sm"><use href="#i-wallet"/></svg> عرض الفاتورة
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pages > 1 %}
+  <div class="pager">
+    <a class="{% if page <= 1 %}off{% endif %}" href="/invoices?page={{ page - 1 }}">السابق</a>
+    <span class="cur">{{ page }} / {{ pages }}</span>
+    <a class="{% if page >= pages %}off{% endif %}" href="/invoices?page={{ page + 1 }}">التالي</a>
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="empty">
+    <div class="empty-art"><svg class="ic" style="width:34px;height:34px"><use href="#i-wallet"/></svg></div>
+    <h3>لا توجد طلبات</h3>
+    <p>ستظهر هنا كل طلبات متجرك لتصدر لها فواتير.</p>
+  </div>
+  {% endif %}
 </div>
 
 {% endblock %}

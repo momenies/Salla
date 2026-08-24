@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+jobs:
+  test:
+    name: اختبارات ومراجعة
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: template/package-lock.json
+
+      # قناة الباركود تحتاج Chromium؛ لا داعي له في الاختبارات
+      - name: تثبيت الاعتماديات
+        working-directory: template
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+        run: npm ci --no-audit --no-fund
+
+      - name: فحص بناء الملفات
+        working-directory: template
+        run: npm run lint
+
+      - name: تشغيل الاختبارات
+        working-directory: template
+        run: npm test
+
+      # الحاوية هي ما يُنشر فعلاً — بناؤها في CI يمنع مفاجآت وقت النشر
+      - name: بناء صورة الحاوية
+        working-directory: template
+        run: docker build -t cart-rescuer:ci .

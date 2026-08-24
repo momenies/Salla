@@ -15,10 +15,17 @@ module.exports = (sequelize, DataTypes) => {
       msg_template: DataTypes.TEXT,
       delay_minutes: { type: DataTypes.INTEGER, defaultValue: 60 },
       auto_enabled: { type: DataTypes.BOOLEAN, defaultValue: false },
+      /** "22:00-08:00" — لا نرسل داخل هذه الساعات احتراماً لنوم العميل */
+      quiet_hours: DataTypes.STRING,
+      /** سقف الرسائل اليومي لكل متجر — حماية من الحظر ومن الفواتير المفاجئة */
+      daily_cap: { type: DataTypes.INTEGER, defaultValue: 200 },
+      /** اسم يظهر في نص الرسالة بدل اسم المتجر إن رغب التاجر */
+      sender_name: DataTypes.STRING,
     },
     {
       sequelize,
       modelName: "MerchantSettings",
+      indexes: [{ unique: true, fields: ["merchant"] }],
     }
   );
   return MerchantSettings;
