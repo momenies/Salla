@@ -1,291 +1,123 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>منقذ السلات | لوحة التحكم</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2325D366'/><text x='50' y='68' font-size='52' text-anchor='middle'>🛒</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg:#f4f7f6; --card:#ffffff; --text:#111b21; --muted:#667781;
-            --border:#e9edef; --wa:#25d366; --wa-dark:#128c7e; --wa-deep:#075e54;
-            --grad:linear-gradient(135deg,#25d366,#128c7e);
-            --r:16px;
-            --sh-sm:0 1px 2px rgba(11,20,26,.06);
-            --sh-md:0 10px 28px -8px rgba(11,20,26,.14);
-        }
-        * { box-sizing:border-box; margin:0; padding:0 }
-        body { font-family:'Tajawal',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; -webkit-font-smoothing:antialiased }
-        a { text-decoration:none; color:inherit }
-        ::selection { background:#b8f3cd }
-        ::-webkit-scrollbar { width:10px; height:8px }
-        ::-webkit-scrollbar-thumb { background:#cfd8dc; border-radius:99px; border:2px solid var(--bg) }
-        .ic { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0 }
-        .ic-f { width:20px; height:20px; fill:currentColor; stroke:none; flex-shrink:0 }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="منقذ السلات — استعد السلات المتروكة في متجرك على سلة عبر تذكير واتساب تلقائي.">
+<meta name="csrf-token" content="{{ csrfToken }}">
+<meta name="color-scheme" content="light dark">
+<title>{% block title %}{{ appName }}{% endblock %}</title>
 
-        /* ================= Top bar ================= */
-        .topbar {
-            position:sticky; top:0; z-index:40;
-            background:rgba(255,255,255,.88); backdrop-filter:blur(12px);
-            border-bottom:1px solid var(--border);
-            box-shadow:0 1px 0 rgba(11,20,26,.02);
-        }
-        .topbar-inner { max-width:1180px; margin:0 auto; padding:12px 22px; display:flex; align-items:center; gap:18px }
-        .brand { display:flex; align-items:center; gap:10px; flex-shrink:0 }
-        .brand .logo { width:40px; height:40px; border-radius:12px; background:var(--grad); display:grid; place-items:center; color:#fff; box-shadow:0 6px 16px rgba(37,211,102,.35) }
-        .brand b { font-size:16px; font-weight:900; letter-spacing:-.2px; display:block; color:var(--wa-deep); line-height:1.3 }
-        .brand small { color:var(--muted); font-size:10.5px; font-weight:500 }
-        .topnav { display:flex; align-items:center; gap:4px; flex:1; overflow-x:auto; scrollbar-width:none }
-        .topnav::-webkit-scrollbar { display:none }
-        .topnav a {
-            display:flex; align-items:center; gap:8px; padding:9px 15px; border-radius:11px;
-            color:#54656f; font-size:14px; font-weight:600; white-space:nowrap; transition:.15s;
-        }
-        .topnav a:hover { background:#f0f2f5; color:var(--text) }
-        .topnav a.active { background:#e7fbee; color:var(--wa-deep); font-weight:800; box-shadow:inset 0 0 0 1px #bfeecf }
-        .topnav a.active .ic { color:var(--wa-dark) }
-        .top-actions { display:flex; align-items:center; gap:10px; flex-shrink:0 }
-        .store-chip { display:flex; align-items:center; gap:9px; background:#f0f2f5; border-radius:99px; padding:5px 14px 5px 6px }
-        .store-chip img { width:30px; height:30px; border-radius:50%; object-fit:cover }
-        .store-chip .fallback { width:30px; height:30px; border-radius:50%; background:var(--grad); color:#fff; display:grid; place-items:center; font-weight:800; font-size:13px }
-        .store-chip b { font-size:12.5px; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-        .logout-btn { width:38px; height:38px; border-radius:11px; display:grid; place-items:center; color:#c0392b; transition:.15s }
-        .logout-btn:hover { background:#fdecea }
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%2325D366'/><text x='50' y='70' font-size='54' text-anchor='middle'>🛒</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/app.css">
 
-        /* ================= Page body ================= */
-        .page { max-width:1180px; margin:0 auto; padding:26px 22px 60px }
-        .footer-note { max-width:1180px; margin:0 auto; padding:0 22px 26px; color:#9fb0b8; font-size:11.5px; display:flex; align-items:center; gap:7px }
-
-        /* ================= Components (used by all pages) ================= */
-        .card { background:var(--card); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh-sm); padding:22px }
-        .card-hover { transition:.18s }
-        .card-hover:hover { transform:translateY(-3px); box-shadow:var(--sh-md); border-color:#d6e2d9 }
-        .page-title { font-size:23px; font-weight:900; letter-spacing:-.3px }
-        .page-sub { color:var(--muted); font-size:13.5px; margin-top:4px }
-        .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:11px 20px; border-radius:11px; border:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:700; transition:.16s }
-        .btn:active { transform:scale(.97) }
-        .btn-primary { background:var(--grad); color:#fff; box-shadow:0 6px 16px rgba(37,211,102,.35) }
-        .btn-primary:hover { filter:brightness(1.06) }
-        .btn-white { background:#fff; color:var(--wa-deep); box-shadow:var(--sh-sm) }
-        .btn-wa { background:var(--wa); color:#fff; box-shadow:0 4px 12px rgba(37,211,102,.32) }
-        .btn-mail { background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe }
-        .btn-ghost { background:#f0f2f5; color:#3b4a54 }
-        .btn-ghost:hover { background:#e4e8eb }
-        .pill { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:99px; font-size:12px; font-weight:700 }
-        .pill::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor }
-        .pill-new { background:#fef3c7; color:#b45309 }
-        .pill-contacted { background:#dbeafe; color:#1d4ed8 }
-        .pill-recovered { background:#d9fdd3; color:#0a6847 }
-        .avatar-letter { width:38px; height:38px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:15px; color:#fff; flex-shrink:0 }
-
-        table.tbl { width:100%; border-collapse:collapse }
-        table.tbl th { text-align:right; font-size:11.5px; font-weight:800; color:#8696a0; letter-spacing:.3px; padding:12px 14px; border-bottom:1px solid var(--border); background:#fafbfb }
-        table.tbl th:first-child { border-radius:0 10px 10px 0 } table.tbl th:last-child { border-radius:10px 0 0 10px }
-        table.tbl td { padding:14px; border-bottom:1px solid var(--border); font-size:14px; vertical-align:middle }
-        table.tbl tbody tr { transition:background .12s }
-        table.tbl tbody tr:hover { background:#f6fafa }
-        table.tbl tr:last-child td { border-bottom:none }
-
-        /* ===== WhatsApp bubble ===== */
-        .wa-chat { background:#efeae2 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='%23e2dbd2'%3E%3Ccircle cx='10' cy='12' r='1.4'/%3E%3Ccircle cx='38' cy='8' r='1'/%3E%3Ccircle cx='52' cy='30' r='1.4'/%3E%3Ccircle cx='24' cy='40' r='1'/%3E%3Ccircle cx='46' cy='52' r='1.3'/%3E%3Ccircle cx='8' cy='48' r='1'/%3E%3C/g%3E%3C/svg%3E"); border-radius:14px; padding:16px; min-height:110px }
-        .wa-bubble { position:relative; background:#d9fdd3; border-radius:10px 10px 2px 10px; padding:9px 13px; font-size:13.5px; line-height:1.85; max-width:92%; box-shadow:0 1px 1px rgba(11,20,26,.12); white-space:pre-wrap; word-break:break-word }
-        .wa-bubble::after { content:""; position:absolute; top:0; inset-inline-end:-7px; width:9px; height:13px; background:#d9fdd3; clip-path:polygon(0 0,100% 0,0 100%) }
-        .wa-time { text-align:left; color:#667781; font-size:10px; margin-top:3px }
-
-        /* ===== Flow stepper ===== */
-        .flow { display:flex; align-items:stretch; gap:0; overflow-x:auto; padding:4px 0 }
-        .flow-step { flex:1; min-width:130px; text-align:center; padding:14px 10px; position:relative }
-        .flow-step:not(:last-child)::after { content:""; position:absolute; top:26px; inset-inline-start:calc(50% + 26px); width:calc(100% - 52px); height:2.5px; background:linear-gradient(90deg,#25d36633,#128c7e33); border-radius:99px }
-        .flow-dot { width:52px; height:52px; margin:0 auto 9px; border-radius:16px; display:grid; place-items:center; background:#f0f2f5; color:var(--muted) }
-        .flow-step.hot .flow-dot { background:var(--grad); color:#fff; box-shadow:0 6px 14px rgba(37,211,102,.35) }
-        .flow-step b { font-size:12.5px; display:block }
-        .flow-step span { font-size:11px; color:var(--muted) }
-
-        /* ================= Login (full-screen hero) ================= */
-        .login-hero {
-            min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
-            padding:44px 20px; position:relative; overflow:hidden; text-align:center;
-            background:
-                radial-gradient(700px 380px at 85% 8%,rgba(37,211,102,.45),transparent 62%),
-                radial-gradient(600px 400px at 8% 92%,rgba(18,140,126,.5),transparent 62%),
-                linear-gradient(165deg,#04291f,#075e54 52%,#0b7a58);
-        }
-        .login-hero::before { content:""; position:absolute; inset:0; opacity:.55; pointer-events:none;
-            background-image:radial-gradient(rgba(255,255,255,.16) 1px,transparent 1px); background-size:24px 24px }
-        .float-bub { position:absolute; background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(8px);
-            border-radius:18px; padding:10px 16px; color:#d9ffe9; font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px;
-            animation:bob 5s ease-in-out infinite }
-        @keyframes bob { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-14px) } }
-        .login-card {
-            position:relative; z-index:2; width:100%; max-width:430px;
-            background:rgba(255,255,255,.97); border-radius:24px; padding:38px 34px 30px;
-            box-shadow:0 34px 90px rgba(1,25,16,.5); animation:pop .3s ease-out;
-        }
-        @keyframes pop { from { transform:scale(.94); opacity:0 } to { transform:scale(1); opacity:1 } }
-        .login-card .logo-xl { width:70px; height:70px; border-radius:21px; background:var(--grad); display:grid; place-items:center; color:#fff;
-            box-shadow:0 16px 36px rgba(37,211,102,.45); margin:0 auto 20px }
-        .feat-chips { position:relative; z-index:2; display:flex; gap:12px; margin-top:26px; flex-wrap:wrap; justify-content:center }
-        .feat-chip { display:flex; align-items:center; gap:9px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16);
-            backdrop-filter:blur(8px); border-radius:99px; padding:10px 18px; color:#d9ffe9; font-size:13px; font-weight:700 }
-        .feat-chip .ic, .feat-chip .ic-f { color:#7ef0ac }
-
-        /* ===== Controls / Modal / Toast ===== */
-        .search-box { display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:12px; padding:11px 15px; min-width:230px; transition:.15s }
-        .search-box:focus-within { border-color:var(--wa); box-shadow:0 0 0 3px rgba(37,211,102,.15) }
-        .search-box input { border:none; outline:none; font-family:inherit; font-size:13.5px; width:100%; background:transparent }
-        .search-box svg { color:#8696a0 }
-        .tabs { display:flex; gap:8px; background:#eceff1; padding:5px; border-radius:12px; width:fit-content; max-width:100%; overflow-x:auto }
-        .tab { display:inline-flex; align-items:center; gap:7px; border:none; cursor:pointer; background:transparent; color:var(--muted); font-family:inherit; font-size:13px; font-weight:700; padding:8px 16px; border-radius:9px; transition:.15s; white-space:nowrap }
-        .tab:hover { color:var(--text) }
-        .tab.active { background:#fff; color:var(--text); box-shadow:var(--sh-sm) }
-        .tab .cnt { background:#e4e8eb; color:#54656f; border-radius:99px; padding:1px 8px; font-size:11px }
-        .tab.active .cnt { background:#d9fdd3; color:#0a6847 }
-        .icon-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; width:36px; height:36px; border-radius:10px; border:1px solid var(--border); background:#fafbfb; color:var(--muted); cursor:pointer; transition:.15s }
-        .icon-btn:hover { background:#f0f2f5; color:var(--text) }
-        .modal-bg { position:fixed; inset:0; background:rgba(17,27,33,.55); backdrop-filter:blur(3px); z-index:50; display:none; align-items:center; justify-content:center; padding:20px }
-        .modal-bg.open { display:flex }
-        .modal { background:#fff; border-radius:20px; width:100%; max-width:480px; overflow:hidden; box-shadow:0 30px 80px rgba(2,20,12,.35); animation:pop .18s ease-out }
-        .modal-head { padding:20px 24px 0; display:flex; justify-content:space-between; align-items:center }
-        .modal-body { padding:16px 24px 24px }
-        .modal textarea { width:100%; min-height:150px; border:1.5px solid var(--border); border-radius:13px; padding:14px; font-family:inherit; font-size:14px; line-height:1.9; resize:vertical; outline:none }
-        .modal textarea:focus { border-color:var(--wa); box-shadow:0 0 0 3px rgba(37,211,102,.15) }
-        #toast { position:fixed; bottom:26px; right:50%; transform:translateX(50%) translateY(90px); background:#111b21; color:#fff; padding:12px 22px; border-radius:13px; font-size:13.5px; font-weight:700; z-index:60; opacity:0; transition:.25s; pointer-events:none; box-shadow:0 14px 40px rgba(2,20,12,.4) }
-        #toast.show { transform:translateX(50%) translateY(0); opacity:1 }
-
-        @media (max-width:860px) {
-            .topbar-inner { flex-wrap:wrap; gap:10px; padding:10px 16px }
-            .topnav { order:3; width:100%; padding-top:2px }
-            .brand b, .brand small { display:none }
-            .store-chip b { display:none }
-            .page { padding:18px 14px 50px }
-            .float-bub { display:none }
-        }
-    </style>
+{# يُطبَّق الوضع قبل رسم الصفحة — وإلا ومض الأبيض في وجه من اختار الليلي #}
+<script nonce="{{ nonce }}">
+  (function(){try{var t=localStorage.getItem("cr-theme");
+  if(!t)t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+  document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
+</script>
 </head>
 <body>
+
+{% include "_icons.html" %}
+
 {% if unlockAll %}
-<div style="background:#7c2d12; color:#fff; text-align:center; padding:8px 14px; font-size:13px; font-weight:600">
-    ⚠️ وضع التجربة مفعّل — كل الميزات مفتوحة بلا شراء. احذف
-    <code style="direction:ltr; display:inline-block; background:rgba(255,255,255,.15); padding:1px 6px; border-radius:5px">UNLOCK_ALL_FEATURES</code>
-    من ملف .env قبل النشر.
+<div class="banner-demo">
+  ⚠️ وضع التجربة مفعّل — كل الميزات مفتوحة بلا شراء. احذف <code>UNLOCK_ALL_FEATURES</code> قبل النشر.
 </div>
 {% endif %}
 
+<div class="shell">
 
-<svg width="0" height="0" style="position:absolute">
-    <defs>
-        <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></symbol>
-        <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M2.5 3.5h3l2.5 11.5h10L21 7.5H6"/></symbol>
-        <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8.2 12 3 3 8.2v7.6L12 21l9-5.2z"/><path d="M3 8.2l9 5 9-5"/><path d="M12 13.2V21"/></symbol>
-        <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M2.8 20c.7-3.2 3.2-5 6.2-5s5.5 1.8 6.2 5"/><path d="M16.5 4.9a3.4 3.4 0 0 1 0 6.2"/><path d="M18 15.2c2 .6 3.4 2.2 3.9 4.8"/></symbol>
-        <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.8-3.6 3.9-5.6 7.5-5.6s6.7 2 7.5 5.6"/></symbol>
-        <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.5-2.3 1a7.6 7.6 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.5A7.6 7.6 0 0 0 6.9 6.5l-2.3-1-2 3.5 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.5 2.3-1a7.6 7.6 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.6 7.6 0 0 0 2.6-1.5l2.3 1 2-3.5z"/></symbol>
-        <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"/><path d="m15 16 5-4-5-4"/><path d="M20 12H9"/></symbol>
-        <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/></symbol>
-        <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12z"/></symbol>
-        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
-        <symbol id="i-send" viewBox="0 0 24 24"><path d="M21.5 2.5 10.8 13.2"/><path d="M21.5 2.5 15 21l-4.2-7.8L3 9z"/></symbol>
-        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol>
-        <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 7h12l1.2 13H4.8z"/><path d="M8.5 10V6.5a3.5 3.5 0 0 1 7 0V10"/></symbol>
-        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.5 4.5 5.5v6c0 4.6 3 8.4 7.5 10 4.5-1.6 7.5-5.4 7.5-10v-6z"/><path d="m9 11.8 2.2 2.2 3.8-4.2"/></symbol>
-        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="10" rx="2.2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></symbol>
-        <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 7H5.5A2.5 2.5 0 0 1 3 4.5v0A2.5 2.5 0 0 1 5.5 2H18v5"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7H5"/><circle cx="16.5" cy="14" r="1.4"/></symbol>
-        <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M6 17V9"/><path d="M11 17V5"/><path d="M16 17v-6"/><path d="M21 17V8"/></symbol>
-        <symbol id="i-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.272-.099-.47-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.347-.347.52-.52.174-.174.232-.298.347-.497.115-.198.058-.371-.03-.52-.087-.149-.663-1.595-.909-2.187-.24-.583-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></symbol>
-        <symbol id="i-salla" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.9 13.6c-1.3 1-3 1.6-4.9 1.6s-3.6-.6-4.9-1.6a.9.9 0 0 1 1.1-1.4c1 .8 2.3 1.2 3.8 1.2s2.8-.4 3.8-1.2a.9.9 0 1 1 1.1 1.4ZM7.2 10.5c0-.9.7-1.6 1.6-1.6s1.6.7 1.6 1.6-.7 1.6-1.6 1.6-1.6-.7-1.6-1.6Zm6.4 0c0-.9.7-1.6 1.6-1.6s1.6.7 1.6 1.6-.7 1.6-1.6 1.6-1.6-.7-1.6-1.6Z"/></symbol>
-    </defs>
-</svg>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <a href="/" class="brand">
+        <span class="brand-logo"><svg class="ic"><use href="#i-cart"/></svg></span>
+        <span>
+          <span class="brand-name">{{ appName }}</span>
+          <span class="brand-sub">لوحة تحكم التاجر</span>
+        </span>
+      </a>
+    </div>
 
-{% if not isLogin %}
-<div class="login-hero">
+    <nav class="nav" aria-label="القائمة الرئيسية">
+      <span class="nav-label">المتابعة</span>
+      <a href="/"><svg class="ic"><use href="#i-home"/></svg> نظرة عامة</a>
+      <a href="/abandoned"><svg class="ic"><use href="#i-bag"/></svg> السلات المتروكة</a>
+      <a href="/automations"><svg class="ic"><use href="#i-zap"/></svg> الأتمتة والرسائل</a>
 
-    <div class="float-bub" style="top:12%; inset-inline-start:8%"><svg class="ic-f" style="width:18px;height:18px;color:#7ef0ac"><use href="#i-wa"/></svg> تم استرداد سلة بقيمة 240 ر.س 🎉</div>
-    <div class="float-bub" style="bottom:16%; inset-inline-end:9%; animation-delay:1.4s"><svg class="ic-f" style="width:18px;height:18px;color:#7ef0ac"><use href="#i-zap"/></svg> تذكير تلقائي أُرسل قبل لحظات</div>
-    <div class="float-bub" style="top:20%; inset-inline-end:12%; animation-delay:2.6s">🛒 سلة جديدة متروكة الآن</div>
+      <span class="nav-label">المتجر</span>
+      <a href="/orders">
+        <svg class="ic"><use href="#i-box"/></svg> الطلبات
+        {% if "order_followups" not in openFeatures %}<svg class="ic nav-lock"><use href="#i-lock"/></svg>{% endif %}
+      </a>
+      <a href="/customers">
+        <svg class="ic"><use href="#i-users"/></svg> العملاء
+        {% if "customers_crm" not in openFeatures %}<svg class="ic nav-lock"><use href="#i-lock"/></svg>{% endif %}
+      </a>
+      <a href="/invoices">
+        <svg class="ic"><use href="#i-wallet"/></svg> الفواتير
+        {% if "invoices" not in openFeatures %}<svg class="ic nav-lock"><use href="#i-lock"/></svg>{% endif %}
+      </a>
 
-    <div class="login-card">
-        <div class="logo-xl"><svg class="ic" style="width:34px;height:34px"><use href="#i-cart"/></svg></div>
-        <h1 style="font-size:25px; font-weight:900; letter-spacing:-.4px; margin-bottom:10px">منقذ السلات</h1>
-        <p style="color:var(--muted); font-size:14px; line-height:1.95; margin-bottom:28px">
-            كل عميل ترك سلته هو صفقة لم تُفقد بعد.<br>
-            تذكير واتساب تلقائي يستعيدها — وأنت نائم.
-        </p>
-        <a href="/login" class="btn btn-primary" style="width:100%; padding:15px; font-size:15.5px; border-radius:14px">
-            <svg class="ic" style="width:22px;height:22px"><use href="#i-salla"/></svg>
-            تسجيل الدخول عبر سلة
+      <span class="nav-label">الحساب</span>
+      <a href="/plans"><svg class="ic"><use href="#i-sparkle"/></svg> الباقات</a>
+      <a href="/settings"><svg class="ic"><use href="#i-gear"/></svg> الإعدادات</a>
+      <a href="/account"><svg class="ic"><use href="#i-user"/></svg> حسابي</a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="row-between">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="تبديل الوضع الليلي">
+          <span data-theme-icon>🌙</span> الوضع
+        </button>
+        <a href="/logout" class="btn btn-ghost btn-sm" title="تسجيل الخروج">
+          <svg class="ic ic-sm"><use href="#i-logout"/></svg> خروج
         </a>
-        <div style="display:flex; align-items:center; gap:8px; color:#8696a0; font-size:12px; margin-top:18px; justify-content:center">
-            <svg class="ic" style="width:15px;height:15px;color:#25d366"><use href="#i-shield"/></svg>
-            دخول آمن ومشفّر عبر منصة سلة الرسمية
-        </div>
+      </div>
     </div>
+  </aside>
 
-    <div class="feat-chips">
-        <span class="feat-chip"><svg class="ic" style="width:17px;height:17px"><use href="#i-clock"/></svg> تنبيه لحظي من سلة</span>
-        <span class="feat-chip"><svg class="ic-f" style="width:17px;height:17px"><use href="#i-wa"/></svg> تذكير واتساب تلقائي</span>
-        <span class="feat-chip"><svg class="ic" style="width:17px;height:17px"><use href="#i-wallet"/></svg> مبيعات تعود للحياة</span>
-    </div>
+  <div class="main">
+    <header class="topbar">
+      <button type="button" class="btn btn-ghost btn-icon menu-btn" onclick="toggleNav()" aria-label="القائمة">
+        <svg class="ic"><use href="#i-menu"/></svg>
+      </button>
+      <span class="topbar-title">{% block pagename %}لوحة التحكم{% endblock %}</span>
+      <div class="topbar-actions">
+        {% if user and user.merchant %}
+        <span class="store-chip" title="{{ user.merchant.name }}">
+          {% if user.merchant.avatar %}
+            <img src="{{ user.merchant.avatar }}" alt="">
+          {% else %}
+            <span class="fallback">{{ (user.merchant.name or "م")[0] }}</span>
+          {% endif %}
+          <b>{{ user.merchant.name or "متجري" }}</b>
+        </span>
+        {% endif %}
+      </div>
+    </header>
 
-</div>
-{% else %}
-<header class="topbar">
-    <div class="topbar-inner">
-        <div class="brand">
-            <div class="logo"><svg class="ic" style="width:21px;height:21px"><use href="#i-cart"/></svg></div>
-            <div><b>منقذ السلات</b><small>لوحة تحكم التاجر</small></div>
-        </div>
-        <nav class="topnav">
-            <a href="/"><svg class="ic"><use href="#i-home"/></svg> نظرة عامة</a>
-            <a href="/abandoned"><svg class="ic"><use href="#i-bag"/></svg> السلات المتروكة</a>
-            <a href="/automations"><svg class="ic"><use href="#i-zap"/></svg> الأتمتة</a>
-            <a href="/orders"><svg class="ic"><use href="#i-box"/></svg> الطلبات{% if allFeatures and "order_followups" not in openFeatures %}<svg class="ic" style="width:13px;height:13px;opacity:.55;margin-inline-start:auto"><use href="#i-lock"/></svg>{% endif %}</a>
-            <a href="/customers"><svg class="ic"><use href="#i-users"/></svg> العملاء{% if allFeatures and "customers_crm" not in openFeatures %}<svg class="ic" style="width:13px;height:13px;opacity:.55;margin-inline-start:auto"><use href="#i-lock"/></svg>{% endif %}</a>
-            <a href="/account"><svg class="ic"><use href="#i-user"/></svg> الحساب</a>
-            <a href="/invoices"><svg class="ic"><use href="#i-wallet"/></svg> الفواتير{% if allFeatures and "invoices" not in openFeatures %}<svg class="ic" style="width:13px;height:13px;opacity:.55;margin-inline-start:auto"><use href="#i-lock"/></svg>{% endif %}</a>
-            <a href="/plans"><svg class="ic"><use href="#i-wallet"/></svg> الباقات</a>
-            <a href="/settings"><svg class="ic"><use href="#i-gear"/></svg> الإعدادات</a>
-        </nav>
-        <div class="top-actions">
-            {% if user and user.merchant %}
-            <div class="store-chip" title="{{ user.merchant.name or "متجري" }}">
-                {% if user.merchant.avatar %}
-                    <img src="{{ user.merchant.avatar }}" alt="">
-                {% else %}
-                    <div class="fallback">{{ (user.merchant.name or "م")[0] }}</div>
-                {% endif %}
-                <b>{{ user.merchant.name or "متجري" }}</b>
-            </div>
-            {% endif %}
-            <a href="/logout" class="logout-btn" title="تسجيل الخروج">
-                <svg class="ic"><use href="#i-logout"/></svg>
-            </a>
-        </div>
-    </div>
-</header>
+    <main class="page">
+      {% block content %}{% endblock %}
+    </main>
 
-<main class="page">
-    {% block content %}{% endblock %}
-</main>
-
-<div class="footer-note">
-    <svg class="ic" style="width:13px;height:13px"><use href="#i-shield"/></svg>
-    منقذ السلات — يعمل مع متجرك على منصة سلة · جميع البيانات مشفّرة
+    <footer class="page" style="padding-top:0; padding-bottom:24px">
+      <div class="row gap-sm muted xsmall">
+        <svg class="ic ic-sm"><use href="#i-shield"/></svg>
+        {{ appName }} · يعمل مع متجرك على منصة سلة · بياناتك مشفّرة ولا تُشارَك
+        {% if support.email %} · <a href="mailto:{{ support.email }}" style="text-decoration:underline">الدعم</a>{% endif %}
+      </div>
+    </footer>
+  </div>
 </div>
 
-<script>
-document.querySelectorAll('.topnav a[href]').forEach(function(a){
-  if (a.pathname === location.pathname) a.classList.add('active');
-});
-function showToast(msg) {
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._h);
-  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
-}
-</script>
-<div id="toast"></div>
-{% endif %}
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="/assets/app.js" defer></script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

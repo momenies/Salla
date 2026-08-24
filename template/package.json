@@ -1,8 +1,8 @@
 {
-  "name": "@salla.sa/express-starter-kit",
-  "version": "1.0.0",
-  "description": "Salla ExpressJS Starter Kit",
-  "author": "Salla App (https://github.com/SallaApp)",
+  "name": "cart-rescuer",
+  "version": "2.0.0",
+  "description": "منقذ السلات — تطبيق سلة لاسترداد السلات المتروكة عبر واتساب",
+  "author": "Salla App",
   "keywords": [
     "node",
     "salla",
@@ -13,10 +13,12 @@
   "homepage": "https://salla.dev",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "serve": "salla app serve",
+    "start": "node app.js",
     "dev": "nodemon app.js",
-    "start": "node app.js"
+    "serve": "salla app serve",
+    "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
+    "test:watch": "node --test --watch \"test/**/*.test.js\"",
+    "lint": "node --check app.js && node -e \"require('./routes');require('./services/automation');console.log('ok')\""
   },
   "engines": {
     "node": ">=20.19.0"
@@ -25,8 +27,7 @@
   "dependencies": {
     "@salla.sa/passport-strategy": "^1.0.6",
     "@salla.sa/webhooks-actions": "^1.0",
-    "body-parser": "2.2.2",
-    "consolidate": "^1.0.4",
+    "compression": "^1.8.1",
     "dotenv": "17.4.2",
     "express": "4.21.2",
     "express-session": "1.19.0",

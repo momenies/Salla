@@ -18,11 +18,19 @@ module.exports = (sequelize, DataTypes) => {
       status: DataTypes.STRING,
       last_contacted_at: DataTypes.INTEGER,
       abandoned_at: DataTypes.INTEGER,
+      /** لحظة تحوّل السلة إلى طلب فعلي — أساس حساب "الإيراد المستعاد" */
+      recovered_at: DataTypes.INTEGER,
+      /** كم تذكيراً أُرسل لهذه السلة (نحترم سقفاً حتى لا نزعج العميل) */
+      reminders_sent: { type: DataTypes.INTEGER, defaultValue: 0 },
     },
     {
       sequelize,
       modelName: "AbandonedCarts",
-      indexes: [{ unique: true, fields: ["merchant", "cart_id"] }],
+      indexes: [
+        { unique: true, fields: ["merchant", "cart_id"] },
+        { fields: ["merchant", "status"] },
+        { fields: ["status", "abandoned_at"] },
+      ],
     }
   );
   return AbandonedCarts;

@@ -3,16 +3,62 @@
 ## حالة المشروع
 
 - الهدف: بناء عدة تطبيقات صغيرة مدفوعة باشتراك لنشرها على متجر تطبيقات سلة (Salla App Store)، بإعادة استخدام قالب واحد.
-- `template/` هو القالب الأساسي: نسخة معدلة من قالب سلة الرسمي `SallaApp/express-starter-kit` (Node.js + Express). أحداث الـ webhooks في `template/Actions/`.
-- **تم اختبار تدفق تسجيل الدخول OAuth كاملاً وهو يعمل** (متجر تجريبي في بوابة الشركاء). تعديلاتنا على القالب الرسمي (لا تُفقد عند التحديث):
-  - `express` مثبت على `4.21.2` (الإصدار 5 يكسر `setExpressVerify` في مكتبة سلة).
-  - قاعدة البيانات: SQLite محلية عبر متغير `DATABASE_STORAGE=database.sqlite` في `.env` (بدل MySQL) — للإنتاج لاحقاً نستبدلها.
-  - إصلاح خطأين في `database/index.js` (saveOauth كانت تبحث بـ email غير موجود، retrieveUser لم تكن تجلب التوكن) وحماية مسار `/` في `app.js` من الانهيار.
-- يتطلب Node >= 20.19 (المثبت على الجهاز: v24). تشغيل محلي: `npm install` ثم `npm run dev` داخل `template/`.
-- مفاتيح التطبيق الحقيقية (Client ID/Secret) موجودة في `template/.env` — الملف مستثنى من Git عبر `.gitignore`، لا ترفعه أبداً ولا تطبعه في اللوج.
-- Webhook Secret و App ID ما زالا غير مضبوطين في `.env` (مطلوبان لأحداث المتجر لاحقاً).
-- النشر المخطط: Google Cloud Run (لدى المستخدم رصيد GCP). عند النشر يتغير Callback URL في البوابة إلى الرابط العام.
-- المستودع Git جاهز: الفرع `main`، والجهاز البعيد `origin` هو `https://github.com/momenies/opencode.git`.
+- `template/` هو التطبيق: **منقذ السلات** — استرداد السلات المتروكة عبر تذكير واتساب تلقائي. أصله قالب سلة الرسمي `SallaApp/express-starter-kit`، وقد أُعيد بناؤه بالكامل (نسخة 2.0).
+
+### البنية بعد إعادة البناء (2026-08-24)
+
+```
+template/
+├── app.js              نقطة تجميع فقط (~190 سطراً بدل 1118) — لا منطق أعمال
+├── config/env.js       كل متغيّرات البيئة تُقرأ وتُتحقّق هنا
+├── config/features.js  كتالوج الميزات المدفوعة
+├── lib/                salla.js · webhooks.js · security.js · session-store.js
+│                       cache.js · views.js · auth.js · format.js · logger.js
+├── services/           automation.js · messaging.js · stats.js
+├── routes/             dashboard · abandoned · automations · settings · store
+│                       plans · webhook · internal · auth · wa
+├── middleware/          الحراسة والصلاحيات
+├── views/              قوالب nunjucks (layout بقائمة جانبية + وضع ليلي)
+├── public/assets/      app.css و app.js مشتركان (يُخزَّنان ٣٠ يوماً)
+└── test/               ٧٧ اختباراً — node:test، كلها تمرّ
+```
+
+### إصلاحات حرجة أُنجزت — لا تُعِدها
+
+- **تسرّب بيانات بين المتاجر (الأخطر):** المكتبة الرسمية `@salla.sa/passport-strategy` تحتفظ بتوكن واحد على مستوى العملية، و`setExpressVerify` كانت تضع `req.user` لكل زائر — أي أن آخر تاجر سجّل دخوله يصبح هوية الجميع. أُزيلت الوسيطة، وصار كل نداء يقرأ توكن متجره من `lib/salla.js`. اختبارات `test/isolation.test.js` تحرس هذا.
+- **تجديد التوكن:** أُضيف عمود `expires_at` (كان `expires_in` وحده لا يكفي) وتجديد تلقائي قبل الانتهاء بخمس دقائق مع حفظ الـ refresh token الجديد.
+- **الجلسات:** كانت MemoryStore بسرّ `"keyboard cat"` — كل إعادة تشغيل تطرد التجار. صارت جلسات على قاعدة البيانات (`lib/session-store.js`) بسرّ إلزامي في الإنتاج.
+- **الويبهوك:** دعم التوقيع HMAC-SHA256 + التوكن، مقارنة ثابتة الزمن، منع تكرار الأحداث، ردّ فوري ثم معالجة، وحماية من الخروج من مجلد Actions.
+- **ثغرة IDOR:** `POST /abandoned/contact` كانت تأخذ `merchant` من النموذج — صار من الجلسة حصراً.
+- **`/logout`:** كان ينهار (`next` غير معرّف) ويمسح توكن كل التجار.
+- عمود `sentToday` صار يُحسب من بداية اليوم بتوقيت المتجر لا من آخر ٢٤ ساعة.
+
+### ميزات أُضيفت
+
+- لوحة مؤشرات حقيقية: إيراد مستعاد، قيمة معلّقة، نسبة استعادة، منحنى ٧ أيام (SVG خالص بلا مكتبة)، تحديث حيّ كل دقيقة.
+- خطوات تهيئة للتاجر الجديد، صفحة تعريفية عامة (`views/landing.html`) للزوار.
+- ساعات هدوء + سقف يومي + إلغاء تلقائي لرسائل الطلب المكتمل.
+- بحث/تصفية/ترقيم، تصدير CSV بـ BOM، استيراد السلات القائمة من سلة، إعادة محاولة/إلغاء الرسائل، رسالة تجريبية.
+- سيناريو `win_back` (متابعة ثانية) إضافة إلى الأربعة السابقة.
+- وضع ليلي كامل، وتصميم متجاوب بقائمة جانبية.
+
+### الأوامر
+
+```bash
+cd template
+npm install && cp .env.example .env
+npm run dev     # http://localhost:8082
+npm test        # ٧٧ اختباراً
+npm run lint
+```
+
+### ملاحظات تشغيلية
+
+- مفاتيح التطبيق الحقيقية في `template/.env` (مستثنى من Git) — لا ترفعه ولا تطبعه.
+- في الإنتاج **لا يقلع التطبيق** بلا `SESSION_SECRET` و`SALLA_WEBHOOK_SECRET` — هذا مقصود.
+- قناة الباركود (whatsapp-web.js) تحتاج Chromium؛ صورة Docker تبنى بدونه، والكود يتعامل مع غيابه برسالة عربية واضحة بدل الانهيار.
+- النشر المخطط: Google Cloud Run. عند النشر: حدّث Callback URL، ووجّه الويبهوك إلى `/webhook`، واضبط Cloud Scheduler على `/internal/cron/<CRON_SECRET>`، **واستبدل SQLite بـ Postgres/MySQL** (ملف SQLite داخل الحاوية يضيع مع كل نشر).
+- المستودع: الفرع `main`، و`origin` هو `https://github.com/momenies/opencode.git`.
 
 ## مشروع reels-engine (منصة قص الفيديو) — محذوف محلياً!
 

@@ -1,128 +1,69 @@
 {% extends 'layout.html' %}
+{% block title %}الطلبات · {{ appName }}{% endblock %}
+{% block pagename %}الطلبات{% endblock %}
 {% block content %}
 
-<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:22px">
-    <div>
-        <div class="page-title">الطلبات</div>
-        <div class="page-sub">تابع وادير طلبات متجرك — تواصل مع عميل أي طلب بضغطة</div>
-    </div>
-    <label class="search-box">
-        <svg class="ic" style="width:16px;height:16px"><use href="#i-cart"/></svg>
-        <input type="text" id="ordSearch" placeholder="ابحث برقم الطلب أو اسم العميل…">
-    </label>
+<div class="page-head">
+  <div>
+    <h1 class="page-title">الطلبات</h1>
+    <p class="page-sub">آخر طلبات متجرك مباشرة من سلة — ومتابعتها التلقائية تعمل في الخلفية.</p>
+  </div>
+  <div class="page-actions">
+    <a href="/automations" class="btn btn-ghost"><svg class="ic ic-sm"><use href="#i-zap"/></svg> رسائل المتابعة</a>
+  </div>
 </div>
 
-<div style="display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:16px">
-    <div class="tabs" id="ordTabs">
-        <button class="tab active" onclick="filterOrders('all', this)">الكل <span class="cnt">{{ orders.length }}</span></button>
-        <button class="tab" onclick="filterOrders('done', this)">مكتملة</button>
-        <button class="tab" onclick="filterOrders('progress', this)">قيد التنفيذ</button>
-        <button class="tab" onclick="filterOrders('canceled', this)">ملغاة</button>
-    </div>
-    <span style="color:var(--muted); font-size:12.5px">اضغط على أي طلب لعرض منتجاته</span>
-</div>
-
-{% if not orders or orders.length === 0 %}
-<div class="card" style="text-align:center; padding:56px 24px">
-    <div style="width:92px; height:92px; margin:0 auto 20px; border-radius:28px; background:linear-gradient(135deg,#f1f5f9,#e2e8f0); display:grid; place-items:center">
-        <svg class="ic" style="width:44px;height:44px;color:#94a3b8"><use href="#i-box"/></svg>
-    </div>
-    <h3 style="font-size:18px; font-weight:800; margin-bottom:8px">لا توجد طلبات بعد</h3>
-    <p style="color:var(--muted); font-size:13.5px; line-height:2">ستظهر الطلبات هنا تلقائياً فور وصول أول عملية شراء لمتجرك.</p>
-</div>
-{% else %}
-<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:16px" id="ordersGrid">
-    {% for order in orders %}
-
-    {% set s = order.status.name or "" %}
-    {% if s === "completed" or s === "paid" or s.indexOf("مكتمل") !== -1 or s.indexOf("مدفوع") !== -1 or s.indexOf("منجز") !== -1 %}
-        {% set pillClass = "pill-recovered" %}{% set sKey = "done" %}
-    {% elif s === "canceled" or s === "cancelled" or s.indexOf("ملغي") !== -1 %}
-        {% set pillClass = "pill-new" %}{% set sKey = "canceled" %}
-    {% elif s === "in progress" or s.indexOf("قيد") !== -1 or s.indexOf("جاري") !== -1 %}
-        {% set pillClass = "pill-contacted" %}{% set sKey = "progress" %}
-    {% else %}
-        {% set pillClass = "pill-new" %}{% set sKey = "progress" %}
-    {% endif %}
-
-    <div class="card card-hover ord-card" data-skey="{{ sKey }}" data-search="{{ (order.reference_id ~ " " ~ (order.customer.first_name or "") ~ " " ~ (order.customer.last_name or ""))|lower }}">
-        <div onclick="toggleItems(this)" style="cursor:pointer">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:13px">
-                <div style="display:flex; align-items:center; gap:10px">
-                    <div class="avatar-letter" style="width:38px; height:38px; background:{% if sKey === 'done' %}linear-gradient(135deg,#34d399,#059669){% elif sKey === 'canceled' %}linear-gradient(135deg,#f87171,#dc2626){% else %}linear-gradient(135deg,#60a5fa,#2563eb){% endif %}">
-                        {{ (order.customer.first_name or "#")[0] }}
-                    </div>
-                    <div>
-                        <b style="font-size:14.5px">#{{ order.reference_id }}</b>
-                        <div style="color:var(--muted); font-size:11.5px">{{ order.date.date or "" }}</div>
-                    </div>
-                </div>
-                <span class="pill {{ pillClass }}">{{ s }}</span>
-            </div>
-
-            <div style="background:#f8fafc; border-radius:12px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center">
-                <span style="color:var(--muted); font-size:12.5px">{{ order.items.length }} منتجات</span>
-                <b style="font-size:16.5px">{{ order.total.amount }} <span style="font-size:11.5px; color:var(--muted)">{{ order.total.currency }}</span></b>
-            </div>
-
-            <div class="ord-items" style="display:none">
-                <div style="border-top:1px dashed var(--border); margin-top:12px; padding-top:11px">
-                    {% for item in order.items %}
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-size:13px">
-                        <span>{{ item.name }}</span>
-                        <span style="background:#eff6ff; color:#2563eb; border-radius:99px; padding:2px 9px; font-size:11.5px; font-weight:700">×{{ item.quantity }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-
-        <div style="border-top:1px solid var(--border); margin-top:13px; padding-top:12px; display:flex; gap:8px; justify-content:flex-end">
-            {% if order.customer and order.customer.mobile %}
-                {% set od = order.customer.mobile|replace(" ","")|replace("-","") %}
-                <a href="tel:{{ od }}" class="icon-btn" title="اتصال بالعميل">
-                    <svg class="ic" style="width:16px;height:16px"><use href="#i-send"/></svg>
-                </a>
-                <button class="btn btn-wa" style="padding:7px 14px; font-size:12.5px"
-                        onclick="sendWs('{{ od }}', 'مرحباً {{ (order.customer.first_name or "") }} 👋%0Aبخصوص طلبك رقم {{ order.reference_id }} في متجرنا 🛒')">
-                    <svg class="ic-f" style="width:15px;height:15px"><use href="#i-wa"/></svg> مراسلة
-                </button>
-            {% endif %}
-            <button class="icon-btn" title="نسخ رقم الطلب"
-                    onclick="navigator.clipboard.writeText('#{{ order.reference_id }}').then(function(){ showToast('✓ تم نسخ رقم الطلب') })">
-                <svg class="ic" style="width:15px;height:15px"><use href="#i-box"/></svg>
-            </button>
-        </div>
-    </div>
-    {% endfor %}
-</div>
+{% if error %}
+<div class="alert alert-danger mb"><svg class="ic"><use href="#i-alert"/></svg><div>{{ error }}</div></div>
 {% endif %}
 
-<script>
-function toggleItems(card) {
-  var items = card.querySelector(".ord-items");
-  items.style.display = items.style.display === "none" ? "block" : "none";
-}
-function sendWs(phone, text) {
-  window.open("https://wa.me/" + phone.replace(/[^0-9]/g,"") + "?text=" + decodeURIComponent(text), "_blank");
-}
-function filterOrders(key, btn) {
-  document.querySelectorAll("#ordTabs .tab").forEach(function(t){ t.classList.remove("active"); });
-  btn.classList.add("active");
-  applyOrdFilters(key);
-}
-function applyOrdFilters(key) {
-  var q = (document.getElementById("ordSearch").value || "").trim().toLowerCase();
-  document.querySelectorAll(".ord-card").forEach(function(c){
-    var okS = key === "all" || c.dataset.skey === key;
-    var okQ = !q || c.dataset.search.indexOf(q) !== -1;
-    c.style.display = okS && okQ ? "" : "none";
-  });
-}
-document.getElementById("ordSearch").addEventListener("input", function(){
-  var a = document.querySelector("#ordTabs .tab.active");
-  applyOrdFilters(a ? a.getAttribute("onclick").match(/'(\w+)'/)[1] : "all");
-});
-</script>
+<div class="card card-pad-0">
+  <div class="card-head">
+    <span class="card-title"><svg class="ic ic-sm"><use href="#i-box"/></svg> الطلبات</span>
+    <div class="card-actions">
+      <span class="search-box">
+        <svg class="ic ic-sm"><use href="#i-search"/></svg>
+        <input type="search" placeholder="تصفية سريعة…" data-filter-target="#ordersBody tr" aria-label="تصفية">
+      </span>
+    </div>
+  </div>
+
+  {% if orders.length %}
+  <div class="table-wrap">
+    <table class="tbl">
+      <thead><tr><th>رقم الطلب</th><th>العميل</th><th>الإجمالي</th><th>الحالة</th><th>التاريخ</th><th></th></tr></thead>
+      <tbody id="ordersBody">
+      {% for order in orders %}
+        <tr>
+          <td class="td-strong ltr">#{{ order.reference_id or order.id }}</td>
+          <td>{{ order.customer_label }}</td>
+          <td class="td-num">{{ order.amount_label }}</td>
+          <td><span class="pill pill-plain pill-contacted">{{ order.status_label }}</span></td>
+          <td class="td-dim">{{ order.date_label }}</td>
+          <td>
+            {% if "invoices" in openFeatures %}
+            <a href="/invoices/{{ order.id }}" class="btn btn-ghost btn-sm"><svg class="ic ic-sm"><use href="#i-wallet"/></svg> فاتورة</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pages > 1 %}
+  <div class="pager">
+    <a class="{% if page <= 1 %}off{% endif %}" href="/orders?page={{ page - 1 }}">السابق</a>
+    <span class="cur">{{ page }} / {{ pages }}</span>
+    <a class="{% if page >= pages %}off{% endif %}" href="/orders?page={{ page + 1 }}">التالي</a>
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="empty">
+    <div class="empty-art"><svg class="ic" style="width:34px;height:34px"><use href="#i-box"/></svg></div>
+    <h3>لا توجد طلبات لعرضها</h3>
+    <p>ستظهر هنا طلبات متجرك فور وصولها من سلة.</p>
+  </div>
+  {% endif %}
+</div>
 
 {% endblock %}
