@@ -104,3 +104,24 @@ test("حدث بلا معرّف متجر يُرفض بأمان", async () => {
 test("الأحداث غير المتعلقة بالاشتراك تُتجاهل", async () => {
   assert.equal(await subs.handleSubscriptionEvent({ event: "order.created", merchant: MERCHANT }), null);
 });
+
+test("السعر يُفصل إلى مبلغ ومدّة حتى لا يلتف سطراً في البطاقة", () => {
+  const { splitPrice } = require("../config/features");
+
+  assert.deepEqual(splitPrice("٢٩ ر.س / شهرياً"), { amount: "٢٩ ر.س", period: "شهرياً" });
+  assert.deepEqual(splitPrice("١٠ ر.س"), { amount: "١٠ ر.س", period: null });
+  assert.deepEqual(splitPrice(null), { amount: null, period: null });
+  assert.deepEqual(splitPrice(""), { amount: null, period: null });
+
+  // كل ميزة مدفوعة تحمل الحقلين جاهزين للعرض
+  for (const feature of FEATURES.filter((f) => !f.free)) {
+    assert.ok(feature.priceAmount, `${feature.key} بلا مبلغ`);
+    assert.ok(feature.pricePeriod, `${feature.key} بلا مدّة`);
+    assert.ok(!feature.priceAmount.includes("/"), "المبلغ لا يحمل الشرطة");
+  }
+  assert.ok(BUNDLE.priceAmount && BUNDLE.pricePeriod);
+
+  // الميزة المجانية بلا سعر — ولا تنكسر
+  const free = FEATURES.find((f) => f.free);
+  assert.equal(free.priceAmount, null);
+});

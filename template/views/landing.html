@@ -55,8 +55,8 @@
   }
   .price-card { position:relative; }
   .price-card.featured { border-color:var(--brand-500); box-shadow:0 0 0 3px rgba(37,211,102,.16), var(--sh-2); }
-  .price-tag { font-size:30px; font-weight:900; letter-spacing:-1px; }
-  .price-tag small { font-size:13px; font-weight:700; color:var(--muted); }
+  .price-card .price-amount { font-size:30px; letter-spacing:-1px; }
+  .price-card .price-period { font-size:13px; }
   .tick { display:flex; gap:9px; align-items:flex-start; font-size:13.5px; line-height:1.85; padding:5px 0; }
   .tick svg { color:var(--brand-500); margin-top:4px; flex-shrink:0; }
   .faq details {
@@ -181,9 +181,10 @@ https://store.salla.sa/cart/a1b2c3
       <div class="card price-card {% if feature.free %}featured{% endif %}">
         {% if feature.free %}<span class="pill pill-brand mb-sm">الأكثر استخداماً</span>{% endif %}
         <b style="font-size:16px">{{ feature.name }}</b>
-        <p class="muted small mt-sm" style="min-height:52px; line-height:1.9">{{ feature.description }}</p>
-        <div class="price-tag mt">
-          {% if feature.free %}مجاناً{% else %}{{ feature.price }}{% endif %}
+        <p class="muted small mt-sm price-desc">{{ feature.description }}</p>
+        <div class="price mt">
+          <span class="price-amount">{% if feature.free %}مجاناً{% else %}{{ feature.priceAmount }}{% endif %}</span>
+          {% if feature.pricePeriod %}<span class="price-period">/ {{ feature.pricePeriod }}</span>{% endif %}
         </div>
         <a href="/login" class="btn {% if feature.free %}btn-primary{% else %}btn-outline{% endif %} btn-block mt">
           {% if feature.free %}ابدأ الآن{% else %}اشترك من سلة{% endif %}
@@ -199,7 +200,10 @@ https://store.salla.sa/cart/a1b2c3
           <p class="muted small mt-sm">{{ bundle.description }}</p>
         </div>
         <div class="row gap-lg">
-          <div class="price-tag">{{ bundle.price }}</div>
+          <div class="price price-lg">
+            <span class="price-amount">{{ bundle.priceAmount }}</span>
+            {% if bundle.pricePeriod %}<span class="price-period">/ {{ bundle.pricePeriod }}</span>{% endif %}
+          </div>
           <a href="/login" class="btn btn-primary">اشترك الآن</a>
         </div>
       </div>

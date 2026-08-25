@@ -23,7 +23,7 @@
 <div class="grid grid-3 mb">
   {% for feature in features %}
   {% set isOpen = feature.key in open %}
-  <div class="card price-feature {% if isOpen %}card-hover{% endif %}" style="{% if isOpen %}border-color:var(--brand-500){% endif %}">
+  <div class="card price-card {% if isOpen %}card-hover{% endif %}" style="{% if isOpen %}border-color:var(--brand-500){% endif %}">
     <div class="row-between mb">
       <span class="avatar avatar-sq" style="background:{% if isOpen %}var(--brand-50){% else %}var(--surface-3){% endif %};color:{% if isOpen %}var(--brand-700){% else %}var(--muted){% endif %}">
         <svg class="ic ic-sm"><use href="#i-{{ feature.icon }}"/></svg>
@@ -38,13 +38,12 @@
     </div>
 
     <b style="font-size:15.5px">{{ feature.name }}</b>
-    <p class="muted small mt-sm" style="min-height:56px; line-height:1.9">{{ feature.description }}</p>
+    <p class="muted small mt-sm price-desc">{{ feature.description }}</p>
 
-    <div class="row-between mt" style="align-items:flex-end">
-      <div>
-        <div style="font-size:22px; font-weight:900; letter-spacing:-.6px">
-          {% if feature.free %}مجاناً{% else %}{{ feature.price }}{% endif %}
-        </div>
+    <div class="price-foot">
+      <div class="price">
+        <span class="price-amount">{% if feature.free %}مجاناً{% else %}{{ feature.priceAmount }}{% endif %}</span>
+        {% if feature.pricePeriod %}<span class="price-period">/ {{ feature.pricePeriod }}</span>{% endif %}
       </div>
       {% if isOpen %}
         <a href="{{ feature.routes[0] }}" class="btn btn-ghost btn-sm">افتحها <svg class="ic ic-sm"><use href="#i-arrow"/></svg></a>
@@ -79,7 +78,7 @@
       <tbody>
       {% for row in entitlements %}
         <tr>
-          <td class="td-strong">{{ row.feature_key }}</td>
+          <td class="td-strong">{{ row.name or row.feature_key }}</td>
           <td class="td-dim">{{ row.plan_label or "—" }}</td>
           <td class="td-dim">{% if row.source == "trial" %}تجربة{% elif row.source == "manual" %}يدوي{% else %}شراء{% endif %}</td>
           <td><span class="pill {% if row.status == 'active' %}pill-recovered{% else %}pill-muted{% endif %}">
