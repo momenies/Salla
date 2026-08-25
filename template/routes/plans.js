@@ -15,11 +15,15 @@ router.get(
   asyncRoute(async (req, res) => {
     const merchantId = merchantOf(req);
     let open = [];
-    let unmatched = null;
+    let unmatchedNotice = false;
     let entitlements = [];
     try {
       open = [...(await activeFeatures(merchantId))];
-      unmatched = await db.lastSubscriptionPayload(merchantId);
+      // التاجر يستحق أن يعرف أن شراءه لم يُفعَّل — بلغته لا بلغتنا.
+      // أما النص الخام فلا يُرسَل إلى القالب إطلاقاً: صفحة التاجر ليست
+      // مكان بنيتنا الداخلية، وبوابة "إلا في الإنتاج" يكفي خطأ في
+      // NODE_ENV ليسقطها. المطوّر يجد ما يحتاجه في سجل الخادم.
+      unmatchedNotice = Boolean(await db.lastSubscriptionPayload(merchantId));
       // الجدول كان يعرض المفتاح البرمجي (customers_crm) للتاجر — نُرفق اسمه العربي
       entitlements = (await db.listEntitlements(merchantId)).map((row) => {
         const plain = row.toJSON();
@@ -39,7 +43,8 @@ router.get(
       locked: null,
       entitlements: entitlements.filter((e) => e.feature_key !== "__unmatched__"),
       appId: env.salla.appId,
-      unmatched,
+      unmatchedNotice,
+      support: { email: env.supportEmail, whatsapp: env.supportWhatsapp },
     });
   })
 );

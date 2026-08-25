@@ -12,7 +12,11 @@
     {% endif %}
     <div class="row gap-sm" style="justify-content:center">
       <a href="/" class="btn btn-primary"><svg class="ic ic-sm"><use href="#i-home"/></svg> العودة للوحة</a>
-      <button type="button" class="btn btn-ghost" onclick="history.back()">رجوع</button>
+      {% if support and support.whatsapp %}
+        <a href="https://wa.me/{{ support.whatsapp }}" class="btn btn-wa">راسل الدعم</a>
+      {% elif support and support.email %}
+        <a href="mailto:{{ support.email }}" class="btn btn-ghost">راسل الدعم</a>
+      {% endif %}
     </div>
   </div>
 </div>

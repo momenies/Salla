@@ -9,8 +9,31 @@ const router = express.Router();
 
 const loginLimiter = rateLimit({ windowMs: 60000, max: 20, message: "محاولات كثيرة — انتظر دقيقة." });
 
-/** صفحة تشرح ما ينقص من المفاتيح بدل رمي التاجر في خطأ سلة الغامض */
+/**
+ * التطبيق غير مضبوط بعد. من يرى هذه الصفحة يختلف باختلاف البيئة:
+ *
+ *   • في التطوير: أنت. فنعرض ما ينقص بالضبط وكيف تضبطه.
+ *   • في الإنتاج: **تاجر** فتح التطبيق من متجر سلة. لا يصحّ أن يرى أسماء
+ *     متغيّرات البيئة ولا محتوى ملف .env ولا أمر توليد المفتاح السرّي —
+ *     تلك داخليّاتنا، وعرضها عليه تسريب وإرباك معاً. يرى اعتذاراً وطريق دعم.
+ */
 function renderSetup(req, res) {
+  if (env.isProd) {
+    log.error("تاجر فتح التطبيق وهو غير مضبوط — أكمل مفاتيح سلة فوراً", {
+      hasClientId: Boolean(env.salla.clientId),
+      hasClientSecret: Boolean(env.salla.clientSecret),
+    });
+    return res.status(503).render("error.html", {
+      code: 503,
+      title: "التطبيق قيد الإعداد",
+      message:
+        "نجري تحديثاً على الربط مع سلة، ولن يطول. جرّب بعد قليل — وإن تكرّر الأمر فراسلنا وسنتكفّل به.",
+      isLogin: false,
+      user: null,
+      support: { email: env.supportEmail, whatsapp: env.supportWhatsapp },
+    });
+  }
+
   const guessed =
     env.salla.redirectUri || `${req.protocol}://${req.get("host")}/oauth/callback`;
   return res.status(503).render("setup.html", {
