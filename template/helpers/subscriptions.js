@@ -9,7 +9,7 @@
  * البديل (فتح كل شيء عند الشك) يعني خسارة مالية صامتة.
  */
 const SallaDatabase = require("./salla-db");
-const { matchFeatures, FEATURES, BUNDLE } = require("../config/features");
+const { matchFeatures, FEATURES, BUNDLE, collectStrings } = require("../config/features");
 const env = require("../config/env");
 const log = require("../lib/logger");
 
@@ -129,9 +129,12 @@ async function handleSubscriptionEvent(eventBody) {
     });
     await SallaDatabase.revokeFeature(merchant, "__unmatched__", "expired");
 
+    // نضع في السجل النصوص المرشّحة نفسها — هي بالضبط ما يُلصق في addonMatch،
+    // فيستغني المطوّر عن عرض أي شيء في واجهة التاجر.
     log.warn(
       `اشتراك: ${eventName} للمتجر ${merchant} — لم نتعرّف على الإضافة "${plan_label || "?"}". ` +
-      `افتح صفحة /plans وانسخ المعرّف إلى addonMatch في config/features.js`
+      `أضف أحد هذه النصوص إلى addonMatch في config/features.js`,
+      { candidates: [...new Set(collectStrings(eventBody))].slice(0, 25) }
     );
     return { event: eventName, merchant, action: "unmatched", plan_label };
   }

@@ -92,15 +92,22 @@
 </div>
 {% endif %}
 
-{% if unmatched %}
-<details class="card">
-  <summary class="strong small" style="cursor:pointer">🛠️ آخر رسالة اشتراك وصلت من سلة (للمطوّر)</summary>
-  <p class="hint mt-sm">
-    وصلت إضافة لم يتعرّف عليها التطبيق، فلم تُفتح أي ميزة. انسخ المعرّف أو الاسم من النص أدناه
-    وضعه في <code>addonMatch</code> داخل <code class="ltr">config/features.js</code>.
-  </p>
-  <pre class="ltr xsmall mt-sm" style="background:var(--surface-3); padding:14px; border-radius:10px; overflow:auto; max-height:280px; text-align:left">{{ unmatched }}</pre>
-</details>
+{% if unmatchedNotice %}
+<div class="alert alert-warn mb">
+  <svg class="ic"><use href="#i-alert"/></svg>
+  <div>
+    <b>وصلنا اشتراك لم نتمكّن من مطابقته بميزة.</b>
+    لم يُخصم منك شيء إضافي، لكن الميزة لم تُفتح بعد. تواصل معنا وسنفعّلها خلال ساعات.
+  </div>
+  {% if support.email or support.whatsapp %}
+  <div class="alert-actions">
+    {% if support.whatsapp %}<a href="https://wa.me/{{ support.whatsapp }}" class="btn btn-sm btn-wa">راسلنا</a>
+    {% elif support.email %}<a href="mailto:{{ support.email }}" class="btn btn-sm btn-ghost">راسلنا</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
 {% endif %}
+
+
 
 {% endblock %}

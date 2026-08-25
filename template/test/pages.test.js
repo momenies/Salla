@@ -196,3 +196,35 @@ test("الحقول المعادية تُهرَّب ولا تُنفَّذ", async
   assert.ok(!body.includes('<img src=x onerror'), "لم يُهرَّب اسم العميل الخبيث");
   assert.ok(body.includes("&lt;img"), "الاسم ظهر مُهرَّباً كنص");
 });
+
+/**
+ * ما يراه التاجر يجب ألّا يحمل داخليّاتنا: أسماء متغيّرات البيئة، ملفات
+ * الشيفرة، أو نص أحداث سلة الخام. هذه الاختبارات تحرس ذلك.
+ */
+test("صفحات التاجر خالية من أسماء ملفات الشيفرة ومتغيّرات البيئة", async () => {
+  const LEAKS = [
+    "config/features.js", "addonMatch", "SESSION_SECRET", "SALLA_OAUTH_CLIENT_SECRET",
+    "SALLA_WEBHOOK_SECRET", "DATABASE_STORAGE", "CRON_SECRET", ".env", "randomBytes",
+  ];
+  for (const pathname of ["/", "/abandoned", "/automations", "/plans", "/customers", "/account"]) {
+    const { body } = await get(pathname);
+    for (const leak of LEAKS) {
+      assert.ok(!body.includes(leak), `${pathname} تسرّب "${leak}" إلى واجهة التاجر`);
+    }
+  }
+});
+
+test("نص حدث الاشتراك الخام لا يُعرض على التاجر", async () => {
+  // نسجّل اشتراكاً بإضافة مجهولة — يحفظ التطبيق نصها الخام للتشخيص
+  const { handleSubscriptionEvent } = require("../helpers/subscriptions");
+  await handleSubscriptionEvent({
+    event: "app.subscription.started",
+    merchant: MERCHANT,
+    data: { name: "إضافة-مجهولة-للاختبار", plan_name: "خطة غامضة" },
+  });
+
+  const { body } = await get("/plans");
+  assert.ok(!body.includes("إضافة-مجهولة-للاختبار"), "النص الخام ظهر للتاجر");
+  assert.ok(!body.includes("addonMatch"), "اسم حقل داخلي ظهر للتاجر");
+  assert.ok(body.includes("لم نتمكّن من مطابقته"), "التاجر يستحق إشعاراً مفهوماً بلغته");
+});
