@@ -38,6 +38,8 @@ router.get(
       saved: req.query.saved === "1",
       ran: parseInt(req.query.ran || "0", 10),
       qrAvailable: wweb.isAvailable(),
+      // السبب الفعلي من مصدر واحد، بدل نص مكرّر في القالب
+      qrReason: wweb.unavailableReason(),
       vars: automation.TEMPLATE_VARS,
       defaultTemplate: automation.SCENARIOS.cart_reminder.tpl,
       cfg: settings
