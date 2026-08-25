@@ -79,6 +79,25 @@ const BUNDLE = {
   addonMatch: ["all_access", "الباقة الشاملة", "bundle"],
 };
 
+/**
+ * يفصل السعر إلى مبلغ ومدّة.
+ *
+ * السبب: "٢٩ ر.س / شهرياً" سطرٌ واحد طويل، فيلتف في منتصفه داخل البطاقة
+ * ("٢٩ ر.س /" ثم "شهرياً") ويبدو مكسوراً. الفصل هنا — لا في القالب — يجعل
+ * كل واجهة تعرضه بمستويين: المبلغ كبيراً والمدّة تحته خافتة.
+ */
+function splitPrice(price) {
+  if (!price) return { amount: null, period: null };
+  const [amount, ...rest] = String(price).split("/");
+  return { amount: amount.trim(), period: rest.join("/").trim() || null };
+}
+
+for (const feature of [...FEATURES, BUNDLE]) {
+  const { amount, period } = splitPrice(feature.price);
+  feature.priceAmount = amount;
+  feature.pricePeriod = period;
+}
+
 // ───────────────────────────── دوال مساعدة ─────────────────────────────────
 
 const BY_KEY = new Map(FEATURES.map((f) => [f.key, f]));
@@ -158,6 +177,7 @@ function collectStrings(payload) {
 
 module.exports = {
   FEATURES,
+  splitPrice,
   BUNDLE,
   getFeature,
   freeKeys,
